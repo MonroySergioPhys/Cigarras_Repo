@@ -1,8 +1,15 @@
+let audioContext;
+
+function getAudioContext() {
+    if (!audioContext) {
+        audioContext = new AudioContext();
+    }
+    return audioContext;
+}
+
 export async function loadAudio(file) {
     const arrayBuffer = await file.arrayBuffer();
-
-    const audioContext = new AudioContext();
-
+    const audioContext = getAudioContext();
     const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
     return {

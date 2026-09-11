@@ -1,0 +1,113 @@
+/* ==========================================================
+   Barra de carga
+   ========================================================== */
+
+.loading {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 8px;
+    background: #f4f4f6;
+    border: 1px solid #e0e0e5;
+    transition: opacity 0.2s ease;
+}
+
+.loading.hidden {
+    display: none;
+}
+
+.loading-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.5rem;
+}
+
+#loadingText {
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+.loading-percent {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: #4a4a55;
+}
+
+.loading-bar {
+    position: relative;
+    width: 100%;
+    height: 10px;
+    border-radius: 6px;
+    background: #e2e2e8;
+    overflow: hidden;
+}
+
+.loading-progress {
+    height: 100%;
+    width: 0%;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #5b8def, #4a7de0);
+    transition: width 0.25s ease-out;
+}
+
+/* Efecto de "actividad" mientras se procesa, útil cuando
+   el progreso real es difícil de medir con precisión */
+.loading-progress.indeterminate {
+    width: 40% !important;
+    animation: loading-slide 1.2s ease-in-out infinite;
+}
+
+@keyframes loading-slide {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(250%); }
+}
+
+.loading-stage {
+    margin: 0.4rem 0 0;
+    font-size: 0.8rem;
+    color: #6b6b75;
+}
+
+/* Estado de error */
+.loading.error .loading-progress {
+    background: #e05b5b;
+}
+
+.loading.error .loading-stage {
+    color: #b23a3a;
+}
+
+/* ==========================================================
+   Estado de grabación
+   ========================================================== */
+
+#recordButton[aria-pressed="true"] {
+    background: #e05b5b;
+    color: #fff;
+}
+
+#recordButton[aria-pressed="true"] .record-icon {
+    animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.4; }
+}
+
+.record-status {
+    font-size: 0.85rem;
+    color: #6b6b75;
+    min-height: 1.2em;
+    margin: 0.3rem 0 0;
+}
+
+/* ==========================================================
+   Contenedores de gráficos Plotly
+   ========================================================== */
+
+.plot-container {
+    width: 100%;
+    min-height: 320px;
+}

@@ -1,3 +1,5 @@
+@import url("loading.css");
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -45,9 +47,26 @@ h2 {
 
 .controls {
     display: flex;
-    align-items: center;
-    gap: 15px;
+    align-items: flex-start;
+    gap: 25px;
     flex-wrap: wrap;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.control-group label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #444;
+}
+
+input[type="file"] {
+    font-size: 0.9rem;
+    max-width: 260px;
 }
 
 button {
@@ -56,6 +75,28 @@ button {
     border-radius: 8px;
     cursor: pointer;
     font-size: 1rem;
+    background: #1f2937;
+    color: white;
+    transition: background 0.15s ease, transform 0.1s ease;
+}
+
+button:hover {
+    background: #374151;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+button:focus-visible {
+    outline: 2px solid #5b8def;
+    outline-offset: 2px;
+}
+
+#recordButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .plot-section {

@@ -26,15 +26,22 @@
 
         <h2>Audio</h2>
 
-        <input
-                type="file"
-                id="audioFile"
-                accept="audio/*"
-        >
+        <div class="control-group">
+            <label for="audioFile">Cargar archivo de audio</label>
+            <input
+                    type="file"
+                    id="audioFile"
+                    accept="audio/*"
+            >
+        </div>
 
-        <button id="recordButton">
-            🎙 Grabar
-        </button>
+        <div class="control-group">
+            <button id="recordButton" aria-pressed="false">
+                <span class="record-icon" aria-hidden="true">🎙</span>
+                <span id="recordButtonText">Grabar</span>
+            </button>
+            <p id="recordStatus" class="record-status" aria-live="polite"></p>
+        </div>
 
     </section>
 
@@ -47,12 +54,26 @@
             <p>No se ha cargado ningún audio.</p>
         </div>
 
-        <div id="loading" class="loading hidden">
-            <div class="loading-bar">
+        <div id="loading" class="loading hidden" aria-live="polite">
+
+            <div class="loading-header">
+                <p id="loadingText">Procesando audio...</p>
+                <span id="loadingPercent" class="loading-percent">0%</span>
+            </div>
+
+            <div
+                    class="loading-bar"
+                    role="progressbar"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                    aria-valuenow="0"
+                    id="loadingBar"
+            >
                 <div id="loadingProgress" class="loading-progress"></div>
             </div>
 
-            <p id="loadingText">Procesando audio...</p>
+            <p id="loadingStage" class="loading-stage">Iniciando…</p>
+
         </div>
 
     </section>
@@ -62,7 +83,7 @@
 
         <h2>Forma de onda</h2>
 
-        <div id="waveform"></div>
+        <div id="waveform" class="plot-container"></div>
 
     </section>
 
@@ -71,7 +92,7 @@
 
         <h2>Espectro</h2>
 
-        <div id="spectrum"></div>
+        <div id="spectrum" class="plot-container"></div>
 
     </section>
 
@@ -80,7 +101,7 @@
 
         <h2>Sonograma</h2>
 
-        <div id="spectrogram"></div>
+        <div id="spectrogram" class="plot-container"></div>
 
     </section>
 

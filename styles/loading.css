@@ -104,6 +104,23 @@
 }
 
 /* ==========================================================
+   Espectro en vivo (grabación)
+   ========================================================== */
+
+.live-spectrum {
+    width: 100%;
+    max-width: 320px;
+    height: 60px;
+    border-radius: 6px;
+    background: #1f2937;
+    display: block;
+}
+
+.live-spectrum.hidden {
+    display: none;
+}
+
+/* ==========================================================
    Contenedores de gráficos Plotly
    ========================================================== */
 

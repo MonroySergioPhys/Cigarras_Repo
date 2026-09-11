@@ -1,9 +1,11 @@
 import { loadAudio } from "./audio.js";
+import { createRecorder, describeMicError } from "./recorder.js";
 
 const audioFile = document.getElementById("audioFile");
 const recordButton = document.getElementById("recordButton");
 const recordButtonText = document.getElementById("recordButtonText");
 const recordStatus = document.getElementById("recordStatus");
+const liveSpectrum = document.getElementById("liveSpectrum");
 const audioInfo = document.getElementById("audioInfo");
 
 const loading = document.getElementById("loading");
@@ -14,6 +16,8 @@ const loadingText = document.getElementById("loadingText");
 const loadingStage = document.getElementById("loadingStage");
 
 let isRecording = false;
+let activeRecorder = null;
+let vizAnimationId = null;
 
 audioFile.addEventListener("change", handleAudioFile);
 recordButton.addEventListener("click", handleRecordClick);
@@ -75,6 +79,16 @@ async function handleAudioFile(event) {
         return;
     }
 
+    await processAudioFile(file);
+}
+
+/**
+ * Procesa un archivo de audio (venga de <input type="file"> o de una
+ * grabación recién terminada) mostrando la barra de carga y la
+ * información resultante. callbacks.onSuccess/onError son opcionales,
+ * por si el llamador necesita actualizar algo extra (como recordStatus).
+ */
+async function processAudioFile(file, callbacks = {}) {
     loadingText.textContent = "Procesando audio...";
     showLoading("Leyendo archivo…");
 
@@ -96,6 +110,8 @@ async function handleAudioFile(event) {
         // Pequeña pausa para que se note el 100% antes de ocultar la barra
         setTimeout(hideLoading, 400);
 
+        callbacks.onSuccess?.(audio);
+
     } catch (error) {
         console.error("Error al cargar el audio:", error);
 
@@ -104,6 +120,8 @@ async function handleAudioFile(event) {
         audioInfo.innerHTML = `
             <p>No fue posible cargar el archivo.</p>
         `;
+
+        callbacks.onError?.(error);
     }
 }
 
@@ -120,20 +138,104 @@ function displayAudioInfo(file, audio) {
 
 
 /* ==========================================================
-   Grabación (placeholder funcional)
+   Grabación
    ========================================================== */
 
-function handleRecordClick() {
-    isRecording = !isRecording;
+async function handleRecordClick() {
+    if (!isRecording) {
+        await startRecording();
+    } else {
+        await stopRecording();
+    }
+}
 
-    recordButton.setAttribute("aria-pressed", String(isRecording));
-    recordButtonText.textContent = isRecording ? "Detener" : "Grabar";
-    recordStatus.textContent = isRecording
-        ? "Grabando…"
-        : "";
+async function startRecording() {
+    recordButton.disabled = true;
+    recordStatus.textContent = "Solicitando acceso al micrófono…";
 
-    if (isRecording) {
-        console.log("Función de grabación próximamente...");
-        // Aquí se conectará getUserMedia() + MediaRecorder cuando esté lista.
+    try {
+        activeRecorder = await createRecorder();
+    } catch (error) {
+        console.error("Error al acceder al micrófono:", error);
+        recordStatus.textContent = describeMicError(error);
+        recordButton.disabled = false;
+        return;
+    }
+
+    isRecording = true;
+    recordButton.disabled = false;
+    recordButton.setAttribute("aria-pressed", "true");
+    recordButtonText.textContent = "Detener";
+    recordStatus.textContent = "Grabando…";
+
+    liveSpectrum.classList.remove("hidden");
+    startLiveVisualization(activeRecorder.analyser);
+
+    activeRecorder.start();
+}
+
+async function stopRecording() {
+    if (!activeRecorder) {
+        return;
+    }
+
+    isRecording = false;
+    recordButton.disabled = true;
+    recordButton.setAttribute("aria-pressed", "false");
+    recordButtonText.textContent = "Grabar";
+    recordStatus.textContent = "Procesando grabación…";
+
+    stopLiveVisualization();
+    liveSpectrum.classList.add("hidden");
+
+    const blob = await activeRecorder.stop();
+    activeRecorder = null;
+    recordButton.disabled = false;
+
+    const extension = blob.type.includes("ogg") ? "ogg" : "webm";
+    const file = new File([blob], `grabacion-${Date.now()}.${extension}`, {
+        type: blob.type
+    });
+
+    await processAudioFile(file, {
+        onSuccess: () => {
+            recordStatus.textContent = "Grabación lista.";
+        },
+        onError: () => {
+            recordStatus.textContent = "Error al procesar la grabación.";
+        }
+    });
+}
+
+function startLiveVisualization(analyser) {
+    const ctx = liveSpectrum.getContext("2d");
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    const { width, height } = liveSpectrum;
+
+    function draw() {
+        vizAnimationId = requestAnimationFrame(draw);
+        analyser.getByteFrequencyData(dataArray);
+
+        ctx.clearRect(0, 0, width, height);
+
+        const barWidth = (width / bufferLength) * 2.5;
+        let x = 0;
+
+        for (let i = 0; i < bufferLength; i++) {
+            const barHeight = (dataArray[i] / 255) * height;
+            ctx.fillStyle = `hsl(${210 + (dataArray[i] / 255) * 40}, 70%, 55%)`;
+            ctx.fillRect(x, height - barHeight, barWidth, barHeight);
+            x += barWidth + 1;
+        }
+    }
+
+    draw();
+}
+
+function stopLiveVisualization() {
+    if (vizAnimationId !== null) {
+        cancelAnimationFrame(vizAnimationId);
+        vizAnimationId = null;
     }
 }

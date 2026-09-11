@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>CICADAS</title>
+
+    <link rel="stylesheet" href="styles/main.css">
+
+    <!-- Plotly -->
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+
+<body>
+
+<header class="header">
+    <h1>CICADAS</h1>
+    <p>Análisis acústico de cigarras</p>
+</header>
+
+
+<main class="container">
+
+    <section class="controls">
+
+        <h2>Audio</h2>
+
+        <input
+                type="file"
+                id="audioFile"
+                accept="audio/*"
+        >
+
+        <button id="recordButton">
+            🎙 Grabar
+        </button>
+
+    </section>
+
+
+    <section class="audio-info">
+
+        <h2>Información</h2>
+
+        <div id="audioInfo">
+            <p>No se ha cargado ningún audio.</p>
+        </div>
+
+    </section>
+
+
+    <section class="plot-section">
+
+        <h2>Forma de onda</h2>
+
+        <div id="waveform"></div>
+
+    </section>
+
+
+    <section class="plot-section">
+
+        <h2>Espectro</h2>
+
+        <div id="spectrum"></div>
+
+    </section>
+
+
+    <section class="plot-section">
+
+        <h2>Sonograma</h2>
+
+        <div id="spectrogram"></div>
+
+    </section>
+
+</main>
+
+
+<script type="module" src="src/app.js"></script>
+
+</body>
+</html>

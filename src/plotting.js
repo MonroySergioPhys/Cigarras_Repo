@@ -152,7 +152,18 @@ export function plotSpectrogram(container, spectrogram, options = {}) {
         z: z,
         type: "heatmap",
 
-        colorscale: "Inferno",
+        colorscale: [
+            [0.00, "#000004"],
+            [0.15, "#1b0c41"],
+            [0.30, "#4a0c6b"],
+            [0.45, "#781c6d"],
+            [0.60, "#a52c60"],
+            [0.72, "#cf4446"],
+            [0.82, "#ed6925"],
+            [0.92, "#fca50a"],
+            [1.00, "#fcffa4"]
+        ],
+
         zmin: -160,
         zmax: -60,
         zsmooth: false,
@@ -179,20 +190,11 @@ export function plotSpectrogram(container, spectrogram, options = {}) {
         },
 
         xaxis: {
-            title: "Tiempo [s]",
-            zeroline: false
+            title: "Tiempo [s]"
         },
 
         yaxis: {
-            title: "Frecuencia [Hz]",
-            zeroline: false
-        },
-
-        margin: {
-            l: 75,
-            r: 85,
-            t: 55,
-            b: 60
+            title: "Frecuencia [Hz]"
         },
 
         paper_bgcolor: "#ffffff",
@@ -200,6 +202,13 @@ export function plotSpectrogram(container, spectrogram, options = {}) {
 
         font: {
             color: "#333333"
+        },
+
+        margin: {
+            l: 75,
+            r: 85,
+            t: 55,
+            b: 60
         },
 
         uirevision: "spectrogram",

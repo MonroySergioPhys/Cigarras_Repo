@@ -26,7 +26,7 @@ button, input { font: inherit; }
 a { color: inherit; }
 .hidden { display: none !important; }
 
-.site-header { position: sticky; top: 0; z-index: 20; background: rgba(16,42,32,.96); color: var(--white); border-bottom: 1px solid rgba(255,255,255,.08); backdrop-filter: blur(14px); }
+.site-header { position: sticky; top: 0; z-index: 20; background: rgba(16,42,32,.96); color: var(--white); border-bottom: 1px solid rgba(255,255,255,.08); backdrop-filter: blur(14px); min-height: 100px; }
 .header-inner { max-width: 1440px; margin: auto; min-height: 78px; padding: 0 34px; display: flex; align-items: center; justify-content: space-between; gap: 30px; }
 .brand { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; }
 .brand-mark-wrap { width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid rgba(217,164,65,.4); border-radius: 12px; background: rgba(217,164,65,.08); }
@@ -35,13 +35,23 @@ a { color: inherit; }
 .brand-text strong { font-family: var(--display); font-size: 1.3rem; line-height: 1; }
 .brand-text span { margin-top: 4px; font-size: .73rem; color: #b8c8bd; letter-spacing: .02em; }
 
-/* Logos institucionales: reemplaza cada contenido por <img src="..."> cuando tengas los logos. */
+/* Logos institucionales ajustados */
 .institution-logos {
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: center;
+    gap: 18px;
+    height: 80px;
     margin-left: auto;
     margin-right: 8px;
+}
+
+.institution-logos img {
+    height: 60px;
+    width: auto;
+    max-width: 100px;
+    object-fit: contain;
+    display: block;
 }
 
 .logo-placeholder {
@@ -192,7 +202,7 @@ a { color: inherit; }
 .theory-card p { color: var(--ink-soft); font-size: .76rem; line-height: 1.6; }
 .theory-question { display: inline-block; margin-top: 15px; color: var(--teal); font-size: .68rem; font-weight: 700; }
 .biology-callout { margin-top: 15px; display: flex; gap: 13px; padding: 18px 20px; border-radius: 12px; background: var(--forest); color: #edf4ee; }
-.callout-icon { width: 31px; height: 31px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 9px; color: var(--gold); background: rgba(217,164,65,.1); }
+.callout-icon { width: 31px; height: 31px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 99px; color: var(--gold); background: rgba(217,164,65,.1); }
 .biology-callout strong { font-family: var(--display); font-size: 1rem; }
 .biology-callout p { margin-top: 4px; color: #b9c9bf; font-size: .74rem; line-height: 1.6; }
 

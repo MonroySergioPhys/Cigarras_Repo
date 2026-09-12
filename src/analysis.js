@@ -194,7 +194,7 @@ export function computeSpectrogram(samples, sampleRate, fftSize = 2048, hopSize 
 
     const times = new Array(frames);
     const values = new Array(frames);
-    const minDb = -90;
+    const minDb = -160;
 
     for (let frame = 0; frame < frames; frame++) {
         const start = frame * hop;
@@ -213,5 +213,5 @@ export function computeSpectrogram(samples, sampleRate, fftSize = 2048, hopSize 
         values[frame] = row;
     }
 
-    return { times, frequencies, values, fftSize: size, hopSize: hop, minDb, maxDb: 0 };
+    return { times, frequencies, values, fftSize: size, hopSize: hop, minDb, maxDb: -60 };
 }

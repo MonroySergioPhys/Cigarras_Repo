@@ -149,32 +149,63 @@ export function plotSpectrogram(container, spectrogram, options = {}) {
     const trace = {
         x: spectrogram.times,
         y: spectrogram.frequencies,
-        z,
+        z: z,
         type: "heatmap",
+
         colorscale: "Inferno",
-        zmin: spectrogram.minDb,
-        zmax: spectrogram.maxDb,
+        zmin: -160,
+        zmax: -60,
         zsmooth: false,
+
         colorbar: {
-            title: { text: "dB", side: "right" },
-            thickness: 12,
-            len: .82,
-            tickfont: { size: 9 }
+            title: {
+                text: "Magnitud [dB]"
+            }
         },
-        hovertemplate: "Tiempo: %{x:.2f} s<br>Frecuencia: %{y:.0f} Hz<br>Nivel: %{z:.1f} dB<extra></extra>"
+
+        hovertemplate:
+            "Tiempo: %{x:.2f} s<br>" +
+            "Frecuencia: %{y:.0f} Hz<br>" +
+            "Magnitud: %{z:.1f} dB" +
+            "<extra></extra>"
     };
 
     const layout = {
-        ...commonLayout,
-        margin: { l: 62, r: 58, t: 20, b: 52 },
-        xaxis: axis("Tiempo (s)"),
-        yaxis: axis("Frecuencia (Hz)", { rangemode: "tozero" })
+        title: {
+            text: "Sonograma del segmento",
+            font: {
+                size: 18
+            }
+        },
+
+        xaxis: {
+            title: "Tiempo [s]",
+            zeroline: false
+        },
+
+        yaxis: {
+            title: "Frecuencia [Hz]",
+            zeroline: false
+        },
+
+        margin: {
+            l: 75,
+            r: 85,
+            t: 55,
+            b: 60
+        },
+
+        paper_bgcolor: "#ffffff",
+        plot_bgcolor: "#ffffff",
+
+        font: {
+            color: "#333333"
+        },
+
+        uirevision: "spectrogram",
+        datarevision: options.revision ?? Date.now()
     };
 
-    // React conserva el contenedor, pero usamos una clave de actualización
-    // para asegurarnos de que una STFT nueva reemplace la anterior.
-    layout.uirevision = "spectrogram";
-    layout.datarevision = options.revision ?? Date.now();
     Plotly.react(container, [trace], layout, plotConfig);
     resizeSoon(container);
 }

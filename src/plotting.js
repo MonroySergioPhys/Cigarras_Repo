@@ -141,10 +141,39 @@ export function plotSpectrum(container, spectrum) {
     resizeSoon(container);
 }
 
+/**
+ * Calcula el rango de color a partir de los valores reales del segmento,
+ * en vez de asumir un piso/techo de dB fijo para toda grabación. Usamos
+ * percentiles (no min/max puro) para que un par de frames atípicos no
+ * aplasten el contraste de todo el sonograma.
+ */
+function computeDynamicRange(values, lowerPercentile = 0.02, upperPercentile = 0.985) {
+    const flat = [];
+    for (const row of values) {
+        for (let i = 0; i < row.length; i++) flat.push(row[i]);
+    }
+    flat.sort((a, b) => a - b);
+
+    const lowIndex = Math.floor(lowerPercentile * (flat.length - 1));
+    const highIndex = Math.floor(upperPercentile * (flat.length - 1));
+
+    let zmin = flat[lowIndex];
+    let zmax = flat[highIndex];
+
+    if (!Number.isFinite(zmin) || !Number.isFinite(zmax) || zmax - zmin < 1) {
+        zmin = flat[0] ?? -100;
+        zmax = (flat[flat.length - 1] ?? zmin + 40);
+    }
+
+    return { zmin, zmax };
+}
+
 export function plotSpectrogram(container, spectrogram, options = {}) {
     const z = spectrogram.frequencies.map((_, k) =>
         spectrogram.times.map((_, t) => spectrogram.values[t][k])
     );
+
+    const { zmin, zmax } = computeDynamicRange(spectrogram.values);
 
     const trace = {
         x: spectrogram.times,
@@ -164,8 +193,8 @@ export function plotSpectrogram(container, spectrogram, options = {}) {
             [1.00, "#fcffa4"]
         ],
 
-        zmin: -160,
-        zmax: -60,
+        zmin,
+        zmax,
         zsmooth: false,
 
         colorbar: {

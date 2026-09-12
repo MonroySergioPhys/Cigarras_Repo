@@ -151,7 +151,7 @@ export function plotSpectrogram(container, spectrogram, options = {}) {
         y: spectrogram.frequencies,
         z,
         type: "heatmap",
-        colorscale: "Viridis",
+        colorscale: "Inferno",
         zmin: spectrogram.minDb,
         zmax: spectrogram.maxDb,
         zsmooth: false,

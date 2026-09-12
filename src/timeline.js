@@ -12,6 +12,10 @@ let samples = null;
 let callback = null;
 let resizeObserver = null;
 let maxSelectionSeconds = 60;
+let draggingSelection = false;
+let dragStartX = 0;
+let dragStartStart = 0;
+let dragStartEnd = 0;
 
 export function initializeTimeline(audioSamples, audioDuration, onSelectionChange, options = {}) {
     samples = audioSamples;
@@ -117,7 +121,7 @@ function updateSelection() {
     endLabel.textContent = formatTime(endTime);
     selectionTime.textContent = `${formatTime(startTime)} — ${formatTime(endTime)}`;
     selectionOverlay.style.left = `${start}%`;
-    selectionOverlay.style.width = `${end - start}%`;
+    selectionOverlay.style.width = `${Math.max(0, end - start)}%`;
 
     callback?.(startTime, endTime);
 }
@@ -133,3 +137,47 @@ function formatTime(seconds) {
     if (hours > 0) return `${hours}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
     return `${minutes}:${String(secs).padStart(2, "0")}`;
 }
+
+
+// Permite arrastrar toda la ventana de selección sin cambiar su duración.
+// Los marcadores laterales siguen sirviendo para cambiar el tamaño de la ventana.
+selectionOverlay.addEventListener("pointerdown", (event) => {
+    if (!duration) return;
+
+    draggingSelection = true;
+    dragStartX = event.clientX;
+    dragStartStart = Number(startInput.value);
+    dragStartEnd = Number(endInput.value);
+    selectionOverlay.setPointerCapture?.(event.pointerId);
+    selectionOverlay.classList.add("is-dragging");
+    event.preventDefault();
+});
+
+selectionOverlay.addEventListener("pointermove", (event) => {
+    if (!draggingSelection || !duration) return;
+
+    const rect = selectionOverlay.parentElement.getBoundingClientRect();
+    if (!rect.width) return;
+
+    const deltaPercent = ((event.clientX - dragStartX) / rect.width) * 100;
+    const width = dragStartEnd - dragStartStart;
+    let nextStart = dragStartStart + deltaPercent;
+    nextStart = Math.max(0, Math.min(100 - width, nextStart));
+    const nextEnd = nextStart + width;
+
+    startInput.value = nextStart;
+    endInput.value = nextEnd;
+    updateSelection();
+});
+
+function stopDragging(event) {
+    if (!draggingSelection) return;
+    draggingSelection = false;
+    selectionOverlay.classList.remove("is-dragging");
+    if (event?.pointerId != null) {
+        try { selectionOverlay.releasePointerCapture?.(event.pointerId); } catch (_) {}
+    }
+}
+
+selectionOverlay.addEventListener("pointerup", stopDragging);
+selectionOverlay.addEventListener("pointercancel", stopDragging);

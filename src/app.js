@@ -1,3 +1,9 @@
+/**
+ * Cicadas — Laboratorio de acústica bioinspirada
+ * Autor: Sergio David Monroy Barragán
+ * Universidad del Tolima — Programa de Física
+ */
+
 import { loadAudio } from "./audio.js";
 import { createRecorder, describeMicError } from "./recorder.js";
 import {

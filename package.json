@@ -1,0 +1,15 @@
+{
+  "name": "cicadas",
+  "version": "1.0.0",
+  "description": "Laboratorio de acústica bioinspirada: forma de onda, FFT y STFT sobre grabaciones de audio, con sonograma en tiempo real.",
+  "author": {
+    "name": "Sergio David Monroy Barragán",
+    "affiliation": "Universidad del Tolima — Programa de Física"
+  },
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "python3 -m http.server 8000"
+  }
+}

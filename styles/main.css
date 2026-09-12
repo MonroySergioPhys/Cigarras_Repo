@@ -190,6 +190,9 @@ a { color: inherit; }
 .method-steps p { color: var(--ink-soft); font-size: .7rem; line-height: 1.45; }
 .method-steps strong { color: var(--ink); }
 
+.site-footer { margin-top: 20px; padding: 18px 5px; border-top: 1px solid var(--line); text-align: center; }
+.site-footer p { color: var(--ink-soft); font-size: .74rem; }
+
 @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .35; transform: scale(.8); } }
 
 @media (max-width: 1100px) {

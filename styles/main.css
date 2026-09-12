@@ -47,10 +47,10 @@ a { color: inherit; }
 }
 
 .institution-logos img {
-    height: 50px !important;
-    max-height: 50px !important;
+    height: 60px !important;
+    max-height: 60px !important;
     width: auto !important;
-    max-width: 90px !important;
+    max-width: 110px !important;
     object-fit: contain;
     display: block;
     flex-shrink: 0;

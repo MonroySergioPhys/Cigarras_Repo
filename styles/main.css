@@ -146,8 +146,33 @@ body {
     min-height: 400px;
 }
 
+/* Alto fijo: si no se lo damos explícitamente, Plotly puede quedarse
+   con una medida vieja (tomada antes de que carguen las fuentes web o
+   se acomode el layout) y el gráfico termina saliéndose del recuadro.
+   overflow:hidden recorta cualquier desborde mientras se recalcula. */
 .plot-container {
     width: 100%;
+    height: 420px;
+    overflow: hidden;
+    position: relative;
+}
+
+.plot-container--tall {
+    height: 480px;
+}
+
+.section-note {
+    font-size: 0.85rem;
+    color: var(--color-ink-soft);
+    margin-bottom: 14px;
+    max-width: 60ch;
+}
+
+.selection-info {
+    margin-top: 10px;
+    font-family: var(--font-data);
+    font-size: 0.85rem;
+    color: var(--color-ink-soft);
 }
 
 /* ==========================================================

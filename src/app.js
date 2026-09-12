@@ -4,7 +4,8 @@ import { createRecorder, describeMicError } from "./recorder.js";
 import {
     toMono,
     computeSpectrum,
-    computeSpectrogram
+    computeSpectrogram,
+    chooseSpectrogramParams
 } from "./analysis.js";
 
 import {
@@ -35,14 +36,48 @@ const audioPlayback = document.getElementById("audioPlayback");
 const audioPlayer = document.getElementById("audioPlayer");
 const downloadLink = document.getElementById("downloadLink");
 
+const selectionInfo = document.getElementById("selectionInfo");
+
 let currentObjectUrl = null;
 
 let isRecording = false;
 let activeRecorder = null;
 let vizAnimationId = null;
 
+// Estado del audio cargado actualmente. Guardamos las muestras
+// completas en mono una sola vez; cada cambio de intervalo en la
+// línea de tiempo vuelve a analizar solo el pedazo seleccionado
+// (ver "Selección de intervalo" más abajo), en vez de repetir el
+// trabajo sobre el audio entero.
+let currentSamples = null;
+let currentSampleRate = null;
+let currentDuration = null;
+let selection = { start: 0, end: 0 };
+
+// Ventana analizada por defecto al cargar un audio largo. Para
+// audios más cortos que esto simplemente se usa el audio completo.
+const DEFAULT_WINDOW_SECONDS = 20;
+const MIN_SELECTION_SECONDS = 1;
+const RELAYOUT_DEBOUNCE_MS = 350;
+
+let relayoutTimer = null;
+let waveformListenerAttached = false;
+
+const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+
 audioFile.addEventListener("change", handleAudioFile);
 recordButton.addEventListener("click", handleRecordClick);
+
+// Si las gráficas quedan con un tamaño desactualizado (por ejemplo
+// tras redimensionar la ventana), forzamos a Plotly a recalcularlas
+// para que no se salgan de su recuadro.
+window.addEventListener("resize", () => {
+    [waveform, spectrum, spectrogram].forEach((el) => {
+        if (el && el.data) {
+            Plotly.Plots.resize(el);
+        }
+    });
+});
 
 
 /* ==========================================================
@@ -122,50 +157,58 @@ async function processAudioFile(file, callbacks = {}) {
         setIndeterminate("Decodificando audio…");
         const audio = await loadAudio(file);
 
-        console.log("AudioBuffer:", audio.audioBuffer);
         console.log("Duración:", audio.duration);
         console.log("Frecuencia de muestreo:", audio.sampleRate);
         console.log("Canales:", audio.numberOfChannels);
         console.log("Muestras:", audio.numberOfSamples);
 
-        setProgress(30, "Preparando señal…");
+        setProgress(20, "Preparando señal…");
+        await nextFrame();
         const samples = toMono(audio);
 
-        setProgress(45, "Calculando forma de onda…");
+        // Guardamos solo los metadatos como valores sueltos. El
+        // objeto "audio" retiene por clausura el AudioBuffer original
+        // (con los canales sin mezclar, el doble de pesado que
+        // "samples" para un archivo estéreo); al dejar de usarlo aquí,
+        // el motor de JS puede liberarlo antes de que empiece el resto
+        // del análisis. Para una grabación de 30 minutos eso puede ser
+        // varios cientos de MB que ya no hace falta tener en memoria.
+        const audioMeta = {
+            duration: audio.duration,
+            sampleRate: audio.sampleRate,
+            numberOfChannels: audio.numberOfChannels,
+            numberOfSamples: audio.numberOfSamples
+        };
+
+        currentSamples = samples;
+        currentSampleRate = audioMeta.sampleRate;
+        currentDuration = audioMeta.duration;
+
+        const initialEnd = Math.min(currentDuration, DEFAULT_WINDOW_SECONDS);
+
+        setProgress(35, "Calculando forma de onda…");
+        await nextFrame();
         plotWaveform(
             waveform,
             samples,
-            audio.sampleRate
+            audioMeta.sampleRate,
+            {
+                enableRangeSlider: true,
+                initialRange: [0, initialEnd]
+            }
         );
+        attachRangeSelectorOnce();
 
-        setProgress(60, "Calculando espectro…");
-        const spectrumData = computeSpectrum(
-            samples,
-            audio.sampleRate
-        );
-        plotSpectrum(
-            spectrum,
-            spectrumData
-        );
-
-        setProgress(80, "Calculando sonograma…");
-        const spectrogramData = computeSpectrogram(
-            samples,
-            audio.sampleRate
-        );
-        plotSpectrogram(
-            spectrogram,
-            spectrogramData
-        );
+        await computeAndPlotForRange(0, initialEnd, { reportProgress: setProgress });
 
         setProgress(100, "Listo");
-        displayAudioInfo(file, audio);
+        displayAudioInfo(file, audioMeta);
         setupPlayback(file);
 
         // Pequeña pausa para que se note el 100% antes de ocultar la barra
         setTimeout(hideLoading, 400);
 
-        callbacks.onSuccess?.(audio);
+        callbacks.onSuccess?.(audioMeta);
 
     } catch (error) {
         console.error("Error al cargar el audio:", error);
@@ -209,6 +252,158 @@ function setupPlayback(file) {
     downloadLink.download = file.name;
 
     audioPlayback.classList.remove("hidden");
+}
+
+
+/* ==========================================================
+   Selección de intervalo (línea de tiempo)
+   ========================================================== */
+
+/**
+ * Calcula el espectro y el sonograma solo para el tramo
+ * [startTime, endTime] del audio (en segundos) y actualiza esas
+ * dos gráficas. reportProgress es opcional y sirve para reusar la
+ * misma barra de "Progreso" tanto en la carga inicial como cuando
+ * el usuario mueve la línea de tiempo después.
+ */
+async function computeAndPlotForRange(startTime, endTime, { reportProgress } = {}) {
+    const startIdx = Math.floor(startTime * currentSampleRate);
+    const endIdx = Math.min(
+        currentSamples.length,
+        Math.ceil(endTime * currentSampleRate)
+    );
+    const segment = currentSamples.subarray(startIdx, endIdx);
+
+    reportProgress?.(55, "Calculando espectro…");
+    await nextFrame();
+    const spectrumData = computeSpectrum(segment, currentSampleRate);
+    plotSpectrum(spectrum, spectrumData);
+
+    reportProgress?.(85, "Calculando sonograma…");
+    await nextFrame();
+    // El hop/tamaño de FFT se adapta a la duración del tramo: un
+    // intervalo pequeño mantiene la resolución fina de siempre, uno
+    // muy grande (o el audio completo) engrosa el salto entre
+    // ventanas para no calcular millones de cuadros y trabar la página.
+    const { fftSize, hopSize } = chooseSpectrogramParams(segment.length);
+    const spectrogramData = computeSpectrogram(
+        segment,
+        currentSampleRate,
+        fftSize,
+        hopSize
+    );
+    plotSpectrogram(spectrogram, spectrogramData);
+
+    selection = { start: startTime, end: endTime };
+    updateSelectionInfo();
+}
+
+function clampSelection(start, end) {
+    const minSelection = Math.min(MIN_SELECTION_SECONDS, currentDuration);
+
+    let s = Math.max(0, Math.min(start, currentDuration));
+    let e = Math.max(0, Math.min(end, currentDuration));
+
+    if (e < s) {
+        [s, e] = [e, s];
+    }
+
+    if (e - s < minSelection) {
+        e = Math.min(currentDuration, s + minSelection);
+        s = Math.max(0, e - minSelection);
+    }
+
+    return { start: s, end: e };
+}
+
+function updateSelectionInfo() {
+    if (!selectionInfo || !currentDuration) {
+        return;
+    }
+
+    const { start, end } = selection;
+    const isFullFile = start <= 0.001 && end >= currentDuration - 0.001;
+
+    selectionInfo.textContent = isFullFile
+        ? `Mostrando el audio completo (${formatTime(currentDuration)}).`
+        : `Analizando ${formatTime(start)}–${formatTime(end)} de ${formatTime(currentDuration)} en total.`;
+}
+
+function formatTime(seconds) {
+    const totalSeconds = Math.max(0, seconds);
+    const minutes = Math.floor(totalSeconds / 60);
+    const secs = (totalSeconds % 60).toFixed(1);
+    return `${minutes}:${secs.padStart(4, "0")}`;
+}
+
+/**
+ * Registra, una sola vez, el listener que escucha cuando el usuario
+ * arrastra la línea de tiempo (el rangeslider bajo la forma de
+ * onda) para elegir un nuevo intervalo a analizar.
+ */
+function attachRangeSelectorOnce() {
+    if (waveformListenerAttached) {
+        return;
+    }
+
+    waveformListenerAttached = true;
+    waveform.on("plotly_relayout", handleWaveformRelayout);
+}
+
+function handleWaveformRelayout(eventData) {
+    if (!currentSamples) {
+        return;
+    }
+
+    let newStart;
+    let newEnd;
+
+    if (
+        eventData["xaxis.range[0]"] !== undefined &&
+        eventData["xaxis.range[1]"] !== undefined
+    ) {
+        newStart = eventData["xaxis.range[0]"];
+        newEnd = eventData["xaxis.range[1]"];
+    } else if (Array.isArray(eventData["xaxis.range"])) {
+        [newStart, newEnd] = eventData["xaxis.range"];
+    } else if (eventData["xaxis.autorange"]) {
+        // El usuario restableció el zoom (doble clic): vuelve a
+        // mostrar todo el audio.
+        newStart = 0;
+        newEnd = currentDuration;
+    } else {
+        // Otro tipo de evento de relayout (leyenda, etc.), lo ignoramos.
+        return;
+    }
+
+    clearTimeout(relayoutTimer);
+    relayoutTimer = setTimeout(() => {
+        runSelectionAnalysis(newStart, newEnd);
+    }, RELAYOUT_DEBOUNCE_MS);
+}
+
+async function runSelectionAnalysis(rawStart, rawEnd) {
+    const { start, end } = clampSelection(rawStart, rawEnd);
+
+    // Si el intervalo prácticamente no cambió, no recalculamos nada.
+    if (
+        Math.abs(start - selection.start) < 0.05 &&
+        Math.abs(end - selection.end) < 0.05
+    ) {
+        return;
+    }
+
+    loadingText.textContent = "Analizando intervalo seleccionado...";
+    showLoading("Extrayendo intervalo…");
+
+    try {
+        await computeAndPlotForRange(start, end, { reportProgress: setProgress });
+        setProgress(100, "Listo");
+        setTimeout(hideLoading, 300);
+    } catch (error) {
+        console.error("Error al analizar el intervalo:", error);
+        setLoadingError("No fue posible analizar ese intervalo.");
+    }
 }
 
 

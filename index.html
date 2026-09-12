@@ -118,17 +118,25 @@
 
         <section class="sheet plot-section">
             <h2>Forma de onda</h2>
+            <p class="section-note">
+                Arrastra los extremos de la barra debajo de la gráfica para elegir
+                el intervalo que se analiza en detalle. Útil con grabaciones largas:
+                un intervalo más corto se procesa más rápido.
+            </p>
             <div id="waveform" class="plot-container"></div>
+            <p id="selectionInfo" class="selection-info" aria-live="polite"></p>
         </section>
 
         <section class="sheet plot-section">
             <h2>Espectro</h2>
+            <p class="section-note">Promedio del espectro de amplitud a lo largo del intervalo seleccionado arriba.</p>
             <div id="spectrum" class="plot-container"></div>
         </section>
 
         <section class="sheet plot-section">
             <h2>Sonograma</h2>
-            <div id="spectrogram" class="plot-container"></div>
+            <p class="section-note">Corresponde al mismo intervalo seleccionado en la forma de onda.</p>
+            <div id="spectrogram" class="plot-container plot-container--tall"></div>
         </section>
 
     </main>

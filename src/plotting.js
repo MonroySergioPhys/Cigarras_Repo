@@ -11,6 +11,17 @@ const plotConfig = {
     ]
 };
 
+// Fuerza a Plotly a recalcular sus dimensiones justo después de
+// pintar. Evita que el gráfico quede "congelado" con un tamaño
+// viejo (por ejemplo si la tipografía web todavía estaba cargando
+// o el layout de la página se acomodó después) y termine
+// desbordando el recuadro que lo contiene.
+function resizeSoon(container) {
+    requestAnimationFrame(() => {
+        Plotly.Plots.resize(container);
+    });
+}
+
 const commonLayout = {
     font: {
         family: "Public Sans, Arial, sans-serif"
@@ -30,10 +41,17 @@ const commonLayout = {
    Forma de onda
    ========================================================== */
 
+/**
+ * options.enableRangeSlider: agrega la barra de selección de
+ * intervalo bajo la forma de onda (nuestra "línea de tiempo").
+ * options.initialRange: [inicio, fin] en segundos a mostrar
+ * seleccionado inicialmente en esa barra.
+ */
 export function plotWaveform(
     container,
     samples,
-    sampleRate
+    sampleRate,
+    options = {}
 ) {
 
     const maxPoints = 5000;
@@ -62,11 +80,27 @@ export function plotWaveform(
         name: "Amplitud"
     };
 
+    const xaxis = {
+        title: "Tiempo (s)"
+    };
+
+    if (options.enableRangeSlider) {
+        xaxis.rangeslider = {
+            visible: true,
+            thickness: 0.16,
+            bgcolor: "#EDEFE9",
+            bordercolor: "#A9B7AC",
+            borderwidth: 1
+        };
+    }
+
+    if (options.initialRange) {
+        xaxis.range = options.initialRange;
+    }
+
     const layout = {
         ...commonLayout,
-        xaxis: {
-            title: "Tiempo (s)"
-        },
+        xaxis,
         yaxis: {
             title: "Amplitud"
         }
@@ -78,6 +112,8 @@ export function plotWaveform(
         layout,
         plotConfig
     );
+
+    resizeSoon(container);
 }
 
 
@@ -118,6 +154,8 @@ export function plotSpectrum(
         layout,
         plotConfig
     );
+
+    resizeSoon(container);
 }
 
 
@@ -172,4 +210,6 @@ export function plotSpectrogram(
         layout,
         plotConfig
     );
+
+    resizeSoon(container);
 }

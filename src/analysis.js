@@ -132,43 +132,114 @@ function hannWindow(N) {
 
 
 /* ==========================================================
+   Resolución automática (evita congelar la pestaña)
+   ========================================================== */
+
+// Si el intervalo elegido es muy largo (o es el audio completo),
+// calcular un FFT/STFT por cada ventana posible puede significar
+// millones de cuadros y congelar el navegador. Estas funciones
+// van agrandando el salto entre ventanas ("hop") hasta que el
+// número de cuadros quede acotado. Mientras más corto el intervalo
+// que el usuario selecciona, más cerca se queda del hop ideal
+// (mejor resolución) — y por eso analizar un tramo pequeño se
+// siente instantáneo, mientras que uno enorme sigue siendo rápido
+// aunque con menos detalle.
+const MAX_SPECTRUM_FRAMES = 3000;
+const MAX_SPECTROGRAM_FRAMES = 1200;
+
+function previousPowerOfTwo(n) {
+    let p = 1;
+    while (p * 2 <= n) {
+        p *= 2;
+    }
+    return p;
+}
+
+export function chooseSpectrogramParams(
+    numSamples,
+    idealFftSize = 1024,
+    idealHopSize = 256
+) {
+    const fftSize = Math.min(idealFftSize, previousPowerOfTwo(numSamples));
+
+    let hopSize = Math.min(idealHopSize, fftSize);
+    let frames = Math.floor((numSamples - fftSize) / hopSize) + 1;
+
+    while (frames > MAX_SPECTROGRAM_FRAMES) {
+        hopSize *= 2;
+        frames = Math.floor((numSamples - fftSize) / hopSize) + 1;
+    }
+
+    return { fftSize, hopSize };
+}
+
+
+/* ==========================================================
    Espectro
    ========================================================== */
 
+/**
+ * Calcula el espectro de amplitud promediando ventanas de Hann
+ * superpuestas a lo largo de TODO el tramo recibido (método de
+ * Welch), en lugar de mirar solo el primer fragmento. Así el
+ * resultado refleja el contenido de frecuencia del intervalo
+ * completo que se está analizando, no solo sus primeros ~0.1 s.
+ */
 export function computeSpectrum(samples, sampleRate, fftSize = 4096) {
 
-    const N = Math.min(fftSize, samples.length);
+    const size = Math.max(1, Math.min(fftSize, previousPowerOfTwo(samples.length)));
+    const window = hannWindow(size);
+    const bins = Math.floor(size / 2) + 1;
 
-    const window = hannWindow(N);
-    const segment = new Float64Array(N);
+    let hop = Math.max(1, Math.floor(size / 2));
+    let frameCount = Math.floor((samples.length - size) / hop) + 1;
 
-    // Tomamos el comienzo de la señal para el primer espectro.
-    for (let i = 0; i < N; i++) {
-        segment[i] = samples[i] * window[i];
+    while (frameCount > MAX_SPECTRUM_FRAMES) {
+        hop *= 2;
+        frameCount = Math.floor((samples.length - size) / hop) + 1;
     }
 
-    const { real, imag } = fft(segment);
+    const sum = new Float64Array(bins);
+    let framesUsed = 0;
 
-    const frequencies = [];
-    const amplitudes = [];
+    const accumulateFrame = (start) => {
+        const segment = new Float64Array(size);
 
-    for (let k = 0; k <= N / 2; k++) {
-
-        const frequency = (k * sampleRate) / N;
-
-        let magnitude =
-            Math.sqrt(
-                real[k] ** 2 +
-                imag[k] ** 2
-            ) / N;
-
-        // Espectro unilateral
-        if (k !== 0 && k !== N / 2) {
-            magnitude *= 2;
+        for (let i = 0; i < size; i++) {
+            segment[i] = (samples[start + i] ?? 0) * window[i];
         }
 
-        frequencies.push(frequency);
-        amplitudes.push(magnitude);
+        const { real, imag } = fft(segment);
+
+        for (let k = 0; k < bins; k++) {
+            let magnitude = Math.sqrt(real[k] ** 2 + imag[k] ** 2) / size;
+
+            if (k !== 0 && k !== size / 2) {
+                magnitude *= 2;
+            }
+
+            sum[k] += magnitude;
+        }
+
+        framesUsed++;
+    };
+
+    for (let start = 0; start + size <= samples.length; start += hop) {
+        accumulateFrame(start);
+    }
+
+    // Intervalo más corto que una sola ventana: igual calculamos
+    // una FFT del tramo disponible, rellenando con ceros.
+    if (framesUsed === 0) {
+        accumulateFrame(0);
+    }
+
+    const frequencies = new Array(bins);
+    const amplitudes = new Array(bins);
+
+    for (let k = 0; k < bins; k++) {
+        frequencies[k] = (k * sampleRate) / size;
+        amplitudes[k] = sum[k] / framesUsed;
     }
 
     return {

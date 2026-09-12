@@ -1,12 +1,27 @@
 import { loadAudio } from "./audio.js";
 import { createRecorder, describeMicError } from "./recorder.js";
 
+import {
+    toMono,
+    computeSpectrum,
+    computeSpectrogram
+} from "./analysis.js";
+
+import {
+    plotWaveform,
+    plotSpectrum,
+    plotSpectrogram
+} from "./plotting.js";
+
 const audioFile = document.getElementById("audioFile");
 const recordButton = document.getElementById("recordButton");
 const recordButtonText = document.getElementById("recordButtonText");
 const recordStatus = document.getElementById("recordStatus");
 const liveSpectrum = document.getElementById("liveSpectrum");
 const audioInfo = document.getElementById("audioInfo");
+const waveform = document.getElementById("waveform");
+const spectrum = document.getElementById("spectrum");
+const spectrogram = document.getElementById("spectrogram");
 
 const loading = document.getElementById("loading");
 const loadingIdle = document.getElementById("loadingIdle");
@@ -112,6 +127,36 @@ async function processAudioFile(file, callbacks = {}) {
         console.log("Frecuencia de muestreo:", audio.sampleRate);
         console.log("Canales:", audio.numberOfChannels);
         console.log("Muestras:", audio.numberOfSamples);
+
+        setProgress(30, "Preparando señal…");
+        const samples = toMono(audio);
+
+        setProgress(45, "Calculando forma de onda…");
+        plotWaveform(
+            waveform,
+            samples,
+            audio.sampleRate
+        );
+
+        setProgress(60, "Calculando espectro…");
+        const spectrumData = computeSpectrum(
+            samples,
+            audio.sampleRate
+        );
+        plotSpectrum(
+            spectrum,
+            spectrumData
+        );
+
+        setProgress(80, "Calculando sonograma…");
+        const spectrogramData = computeSpectrogram(
+            samples,
+            audio.sampleRate
+        );
+        plotSpectrogram(
+            spectrogram,
+            spectrogramData
+        );
 
         setProgress(100, "Listo");
         displayAudioInfo(file, audio);

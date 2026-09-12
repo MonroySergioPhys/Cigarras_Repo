@@ -7,8 +7,10 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="f5eab67d-dab9-45b4-8533-e39c46db71ed" name="Changes" comment="">
+    <list default="true" id="f5eab67d-dab9-45b4-8533-e39c46db71ed" name="Changes" comment="Mejoras visuales">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/fft.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/plots.js" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -21,7 +23,6 @@
     </persistenceIdMap>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="8" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="FileTemplateManagerImpl">
@@ -55,23 +56,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0000000848800061" />
-      <entry key="MS500" value="1.038526635170744" />
-      <entry key="S2" value="1.4430372779669822" />
-      <entry key="S5" value="1.7220646902440506" />
-      <entry key="S10" value="1.849743939580636" />
-      <entry key="S30" value="1.9664317109665306" />
-      <entry key="S60" value="2.47336402911097" />
-      <entry key="M2" value="4.536093309370976" />
-      <entry key="M5" value="8.782429386447909" />
-      <entry key="M10" value="11.604674153107124" />
-      <entry key="M15" value="13.04246564495112" />
-      <entry key="M30" value="15.187519339243538" />
-      <entry key="H1" value="16.783339129504604" />
-      <entry key="H2" value="17.795377678542778" />
-      <entry key="H4" value="18.370761886210992" />
-      <entry key="D1" value="18.891116008471435" />
-      <entry key="W1" value="18.98434316751694" />
+      <entry key="MS100" value="1.0193331300101334" />
+      <entry key="MS500" value="1.6402463424827538" />
+      <entry key="S2" value="2.4781565013785176" />
+      <entry key="S5" value="2.770477119879238" />
+      <entry key="S10" value="2.9229332360790066" />
+      <entry key="S30" value="3.516731712775793" />
+      <entry key="S60" value="4.296375218612079" />
+      <entry key="M2" value="6.299543355360381" />
+      <entry key="M5" value="10.738055398378478" />
+      <entry key="M10" value="13.893686099935264" />
+      <entry key="M15" value="15.50435600380301" />
+      <entry key="M30" value="17.87104338598095" />
+      <entry key="H1" value="19.60759379415365" />
+      <entry key="H2" value="20.701972359289563" />
+      <entry key="H4" value="21.322488742081514" />
+      <entry key="D1" value="21.882833957387792" />
+      <entry key="W1" value="21.983153965918007" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -93,23 +94,23 @@
       <entry key="W1" value="0.0" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="5.742366449534496E-5" />
-      <entry key="MS500" value="0.17985587370021255" />
-      <entry key="S2" value="1.0553126541788913" />
-      <entry key="S5" value="1.5437284496352586" />
-      <entry key="S10" value="1.7561671989940222" />
-      <entry key="S30" value="1.9341996541845927" />
-      <entry key="S60" value="2.4570585908341256" />
-      <entry key="M2" value="4.527786889139907" />
-      <entry key="M5" value="8.77899509508265" />
-      <entry key="M10" value="11.602886767571823" />
-      <entry key="M15" value="13.041221525500204" />
-      <entry key="M30" value="15.186835012800383" />
-      <entry key="H1" value="16.782966917782105" />
-      <entry key="H2" value="17.79518099382416" />
-      <entry key="H4" value="18.37066039602989" />
-      <entry key="D1" value="18.89109860654525" />
-      <entry key="W1" value="18.984340668902522" />
+      <entry key="MS100" value="0.8576519485361038" />
+      <entry key="MS500" value="1.5053608393072668" />
+      <entry key="S2" value="2.366057890143769" />
+      <entry key="S5" value="2.7115892132512287" />
+      <entry key="S10" value="2.888576235156866" />
+      <entry key="S30" value="3.4961708094995867" />
+      <entry key="S60" value="4.2818928874296995" />
+      <entry key="M2" value="6.290559340699667" />
+      <entry key="M5" value="10.73385318538099" />
+      <entry key="M10" value="13.89141964238432" />
+      <entry key="M15" value="15.50277070553862" />
+      <entry key="M30" value="17.870176998180106" />
+      <entry key="H1" value="19.607127301892884" />
+      <entry key="H2" value="20.70172761345343" />
+      <entry key="H4" value="21.322362970734986" />
+      <entry key="D1" value="21.882812471627837" />
+      <entry key="W1" value="21.983150882961624" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo">{
@@ -225,6 +226,7 @@
       <workItem from="1789156449045" duration="1089000" />
       <workItem from="1789161245107" duration="1018000" />
       <workItem from="1789162360104" duration="4051000" />
+      <workItem from="1789171463712" duration="978000" />
     </task>
     <task id="LOCAL-00001" summary="Barra de carga oculta y texto">
       <option name="closed" value="true" />
@@ -258,7 +260,15 @@
       <option name="project" value="LOCAL" />
       <updated>1789166120316</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Mejoras visuales">
+      <option name="closed" value="true" />
+      <created>1789171611413</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1789171611414</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -268,7 +278,8 @@
     <MESSAGE value="Barra de carga oculta y texto" />
     <MESSAGE value="Barra de carga y mejora en el codigo" />
     <MESSAGE value="Audio" />
-    <option name="LAST_COMMIT_MESSAGE" value="Audio" />
+    <MESSAGE value="Mejoras visuales" />
+    <option name="LAST_COMMIT_MESSAGE" value="Mejoras visuales" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

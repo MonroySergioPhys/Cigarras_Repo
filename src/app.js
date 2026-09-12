@@ -1,18 +1,14 @@
 import { loadAudio } from "./audio.js";
 import { createRecorder, describeMicError } from "./recorder.js";
-
 import {
     toMono,
     computeSpectrum,
     computeSpectrogram,
+    computeSignalMetrics,
     chooseSpectrogramParams
 } from "./analysis.js";
-
-import {
-    plotWaveform,
-    plotSpectrum,
-    plotSpectrogram
-} from "./plotting.js";
+import { plotWaveform, plotSpectrum, plotSpectrogram } from "./plotting.js";
+import { initializeTimeline } from "./timeline.js";
 
 const audioFile = document.getElementById("audioFile");
 const recordButton = document.getElementById("recordButton");
@@ -20,9 +16,18 @@ const recordButtonText = document.getElementById("recordButtonText");
 const recordStatus = document.getElementById("recordStatus");
 const liveSpectrum = document.getElementById("liveSpectrum");
 const audioInfo = document.getElementById("audioInfo");
+const audioBadge = document.getElementById("audioBadge");
+const audioPlayback = document.getElementById("audioPlayback");
+const audioPlayer = document.getElementById("audioPlayer");
+const downloadLink = document.getElementById("downloadLink");
+
+const timelineSection = document.getElementById("timelineSection");
 const waveform = document.getElementById("waveform");
 const spectrum = document.getElementById("spectrum");
 const spectrogram = document.getElementById("spectrogram");
+const waveformStats = document.getElementById("waveformStats");
+const spectrumStats = document.getElementById("spectrumStats");
+const insights = document.getElementById("insights");
 
 const loading = document.getElementById("loading");
 const loadingIdle = document.getElementById("loadingIdle");
@@ -32,401 +37,207 @@ const loadingPercent = document.getElementById("loadingPercent");
 const loadingText = document.getElementById("loadingText");
 const loadingStage = document.getElementById("loadingStage");
 
-const audioPlayback = document.getElementById("audioPlayback");
-const audioPlayer = document.getElementById("audioPlayer");
-const downloadLink = document.getElementById("downloadLink");
-
-const selectionInfo = document.getElementById("selectionInfo");
-
 let currentObjectUrl = null;
-
+let currentSamples = null;
+let currentSampleRate = 0;
+let currentDuration = 0;
+let currentFile = null;
+let analysisTimer = null;
+let analysisToken = 0;
 let isRecording = false;
 let activeRecorder = null;
 let vizAnimationId = null;
 
-// Estado del audio cargado actualmente. Guardamos las muestras
-// completas en mono una sola vez; cada cambio de intervalo en la
-// línea de tiempo vuelve a analizar solo el pedazo seleccionado
-// (ver "Selección de intervalo" más abajo), en vez de repetir el
-// trabajo sobre el audio entero.
-let currentSamples = null;
-let currentSampleRate = null;
-let currentDuration = null;
-let selection = { start: 0, end: 0 };
-
-// Ventana analizada por defecto al cargar un audio largo. Para
-// audios más cortos que esto simplemente se usa el audio completo.
 const DEFAULT_WINDOW_SECONDS = 20;
 const MIN_SELECTION_SECONDS = 1;
-const RELAYOUT_DEBOUNCE_MS = 350;
+const MAX_AUTO_ANALYSIS_SECONDS = 60;
 
-let relayoutTimer = null;
-let waveformListenerAttached = false;
+// ------------------------------------------------------------
+// Carga
+// ------------------------------------------------------------
 
-const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
-
-audioFile.addEventListener("change", handleAudioFile);
+audioFile.addEventListener("change", async (event) => {
+    const file = event.target.files?.[0];
+    if (file) await processAudioFile(file);
+});
 recordButton.addEventListener("click", handleRecordClick);
-
-// Si las gráficas quedan con un tamaño desactualizado (por ejemplo
-// tras redimensionar la ventana), forzamos a Plotly a recalcularlas
-// para que no se salgan de su recuadro.
 window.addEventListener("resize", () => {
     [waveform, spectrum, spectrogram].forEach((el) => {
-        if (el && el.data) {
-            Plotly.Plots.resize(el);
-        }
+        if (el?.data) Plotly.Plots.resize(el);
     });
 });
 
-
-/* ==========================================================
-   Barra de carga
-   ========================================================== */
-
-function showLoading(initialStage = "Iniciando…") {
-    loading.classList.remove("hidden", "error");
-    loadingIdle.classList.add("hidden");
-    setIndeterminate(initialStage);
-}
-
-function hideLoading() {
-    loading.classList.add("hidden");
-    loadingIdle.classList.remove("hidden");
-}
-
-function setProgress(percent, stageText) {
-    const clamped = Math.max(0, Math.min(100, percent));
-
-    loadingProgress.classList.remove("indeterminate");
-    loadingProgress.style.width = `${clamped}%`;
-
-    loadingBar.setAttribute("aria-valuenow", String(Math.round(clamped)));
-    loadingPercent.textContent = `${Math.round(clamped)}%`;
-
-    if (stageText) {
-        loadingStage.textContent = stageText;
-    }
-}
-
-function setIndeterminate(stageText) {
-    loadingProgress.classList.add("indeterminate");
-    loadingPercent.textContent = "…";
-    loadingBar.removeAttribute("aria-valuenow");
-
-    if (stageText) {
-        loadingStage.textContent = stageText;
-    }
-}
-
-function setLoadingError(message) {
-    loading.classList.add("error");
-    loadingText.textContent = "Error al procesar el audio";
-    loadingStage.textContent = message;
-    loadingPercent.textContent = "";
-}
-
-
-/* ==========================================================
-   Carga de archivo de audio
-   ========================================================== */
-
-async function handleAudioFile(event) {
-    const file = event.target.files[0];
-
-    if (!file) {
-        return;
-    }
-
-    await processAudioFile(file);
-}
-
-/**
- * Procesa un archivo de audio (venga de <input type="file"> o de una
- * grabación recién terminada) mostrando la barra de carga y la
- * información resultante. callbacks.onSuccess/onError son opcionales,
- * por si el llamador necesita actualizar algo extra (como recordStatus).
- */
 async function processAudioFile(file, callbacks = {}) {
     loadingText.textContent = "Procesando audio...";
-    showLoading("Leyendo archivo…");
+    showLoading("Decodificando la grabación…");
+    analysisToken++;
 
     try {
-        console.log("Archivo seleccionado:", file.name);
-
-        setIndeterminate("Decodificando audio…");
         const audio = await loadAudio(file);
-
-        console.log("Duración:", audio.duration);
-        console.log("Frecuencia de muestreo:", audio.sampleRate);
-        console.log("Canales:", audio.numberOfChannels);
-        console.log("Muestras:", audio.numberOfSamples);
-
-        setProgress(20, "Preparando señal…");
-        await nextFrame();
         const samples = toMono(audio);
 
-        // Guardamos solo los metadatos como valores sueltos. El
-        // objeto "audio" retiene por clausura el AudioBuffer original
-        // (con los canales sin mezclar, el doble de pesado que
-        // "samples" para un archivo estéreo); al dejar de usarlo aquí,
-        // el motor de JS puede liberarlo antes de que empiece el resto
-        // del análisis. Para una grabación de 30 minutos eso puede ser
-        // varios cientos de MB que ya no hace falta tener en memoria.
-        const audioMeta = {
-            duration: audio.duration,
-            sampleRate: audio.sampleRate,
-            numberOfChannels: audio.numberOfChannels,
-            numberOfSamples: audio.numberOfSamples
-        };
-
+        currentFile = file;
         currentSamples = samples;
-        currentSampleRate = audioMeta.sampleRate;
-        currentDuration = audioMeta.duration;
+        currentSampleRate = audio.sampleRate;
+        currentDuration = audio.duration;
 
         const initialEnd = Math.min(currentDuration, DEFAULT_WINDOW_SECONDS);
 
-        setProgress(35, "Calculando forma de onda…");
-        await nextFrame();
-        plotWaveform(
-            waveform,
-            samples,
-            audioMeta.sampleRate,
-            {
-                enableRangeSlider: true,
-                initialRange: [0, initialEnd]
-            }
-        );
-        attachRangeSelectorOnce();
-
-        await computeAndPlotForRange(0, initialEnd, { reportProgress: setProgress });
-
-        setProgress(100, "Listo");
-        displayAudioInfo(file, audioMeta);
+        displayAudioInfo(file, audio);
         setupPlayback(file);
+        audioBadge.textContent = currentDuration > 300 ? "Audio largo" : "Listo para analizar";
+        audioBadge.className = `badge ${currentDuration > 300 ? "neutral" : "ready"}`;
 
-        // Pequeña pausa para que se note el 100% antes de ocultar la barra
-        setTimeout(hideLoading, 400);
+        setProgress(28, "Construyendo navegación temporal…");
+        await nextFrame();
+        timelineSection.classList.remove("hidden");
+        initializeTimeline(samples, currentDuration, scheduleRangeAnalysis);
 
-        callbacks.onSuccess?.(audioMeta);
+        setProgress(45, "Preparando forma de onda…");
+        await nextFrame();
+        plotWaveform(waveform, samples, currentSampleRate);
 
+        // Para un archivo corto se analiza completo; para uno largo se usa
+        // una ventana inicial pequeña y el usuario decide qué estudiar.
+        const end = currentDuration <= DEFAULT_WINDOW_SECONDS ? currentDuration : initialEnd;
+        await analyzeRange(0, end, { showProgress: true });
+
+        setProgress(100, "Análisis listo");
+        setTimeout(hideLoading, 350);
+        callbacks.onSuccess?.(audio);
     } catch (error) {
-        console.error("Error al cargar el audio:", error);
-
+        console.error(error);
         setLoadingError(error.message || "Formato no soportado o archivo dañado.");
-
-        audioInfo.innerHTML = `
-            <p>No fue posible cargar el archivo.</p>
-        `;
+        audioInfo.innerHTML = `<p class="empty-state">No fue posible cargar el archivo.</p>`;
         audioPlayback.classList.add("hidden");
-
         callbacks.onError?.(error);
     }
 }
 
 function displayAudioInfo(file, audio) {
     audioInfo.innerHTML = `
-        <p><strong>Archivo:</strong> ${file.name}</p>
-        <p><strong>Formato:</strong> <span class="data-value">${file.type || "Desconocido"}</span></p>
-        <p><strong>Duración:</strong> <span class="data-value">${audio.duration.toFixed(2)} s</span></p>
-        <p><strong>Frecuencia de muestreo:</strong> <span class="data-value">${audio.sampleRate} Hz</span></p>
-        <p><strong>Canales:</strong> <span class="data-value">${audio.numberOfChannels}</span></p>
-        <p><strong>Muestras:</strong> <span class="data-value">${audio.numberOfSamples}</span></p>
-    `;
+        <div class="audio-meta-grid">
+            <div class="meta-card"><span>Archivo</span><strong title="${escapeHTML(file.name)}">${escapeHTML(file.name)}</strong></div>
+            <div class="meta-card"><span>Duración</span><strong>${formatTime(audio.duration)}</strong></div>
+            <div class="meta-card"><span>Muestreo</span><strong>${audio.sampleRate.toLocaleString()} Hz</strong></div>
+            <div class="meta-card"><span>Canales</span><strong>${audio.numberOfChannels}</strong></div>
+        </div>`;
 }
 
-/**
- * Prepara el reproductor y el enlace de descarga para el archivo
- * cargado o recién grabado. Revoca la URL anterior antes de crear
- * una nueva para no acumular objetos en memoria.
- */
 function setupPlayback(file) {
-    if (currentObjectUrl) {
-        URL.revokeObjectURL(currentObjectUrl);
-    }
-
+    if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
     currentObjectUrl = URL.createObjectURL(file);
-
     audioPlayer.src = currentObjectUrl;
     downloadLink.href = currentObjectUrl;
     downloadLink.download = file.name;
-
     audioPlayback.classList.remove("hidden");
 }
 
+// ------------------------------------------------------------
+// Selección y análisis
+// ------------------------------------------------------------
 
-/* ==========================================================
-   Selección de intervalo (línea de tiempo)
-   ========================================================== */
+function scheduleRangeAnalysis(start, end) {
+    clearTimeout(analysisTimer);
+    analysisTimer = setTimeout(() => analyzeRange(start, end, { showProgress: true }), 300);
+}
 
-/**
- * Calcula el espectro y el sonograma solo para el tramo
- * [startTime, endTime] del audio (en segundos) y actualiza esas
- * dos gráficas. reportProgress es opcional y sirve para reusar la
- * misma barra de "Progreso" tanto en la carga inicial como cuando
- * el usuario mueve la línea de tiempo después.
- */
-async function computeAndPlotForRange(startTime, endTime, { reportProgress } = {}) {
-    const startIdx = Math.floor(startTime * currentSampleRate);
-    const endIdx = Math.min(
-        currentSamples.length,
-        Math.ceil(endTime * currentSampleRate)
-    );
+async function analyzeRange(startTime, endTime, { showProgress = false } = {}) {
+    if (!currentSamples || !currentSampleRate) return;
+
+    const min = Math.min(MIN_SELECTION_SECONDS, currentDuration);
+    let start = Math.max(0, Math.min(startTime, currentDuration));
+    let end = Math.max(0, Math.min(endTime, currentDuration));
+    if (end < start) [start, end] = [end, start];
+    if (end - start < min) end = Math.min(currentDuration, start + min);
+
+    // Protección explícita: nunca lanzamos una STFT gigantesca por accidente.
+    if (end - start > MAX_AUTO_ANALYSIS_SECONDS) {
+        end = start + MAX_AUTO_ANALYSIS_SECONDS;
+        if (end > currentDuration) {
+            end = currentDuration;
+            start = Math.max(0, end - MAX_AUTO_ANALYSIS_SECONDS);
+        }
+    }
+
+    const token = ++analysisToken;
+    const startIdx = Math.floor(start * currentSampleRate);
+    const endIdx = Math.min(currentSamples.length, Math.ceil(end * currentSampleRate));
     const segment = currentSamples.subarray(startIdx, endIdx);
 
-    reportProgress?.(55, "Calculando espectro…");
+    if (showProgress) showLoading("Analizando intervalo…");
+    if (showProgress) setProgress(18, `Intervalo ${formatTime(start)} — ${formatTime(end)}`);
+
     await nextFrame();
+    if (token !== analysisToken) return;
+    plotWaveform(waveform, segment, currentSampleRate, { initialRange: [0, end - start] });
+
+    const metrics = computeSignalMetrics(segment, currentSampleRate);
+    renderWaveformStats(metrics);
+    if (showProgress) setProgress(48, "Calculando espectro FFT…");
+
+    await nextFrame();
+    if (token !== analysisToken) return;
     const spectrumData = computeSpectrum(segment, currentSampleRate);
     plotSpectrum(spectrum, spectrumData);
+    renderSpectrumStats(spectrumData);
 
-    reportProgress?.(85, "Calculando sonograma…");
+    if (showProgress) setProgress(72, "Calculando sonograma STFT…");
     await nextFrame();
-    // El hop/tamaño de FFT se adapta a la duración del tramo: un
-    // intervalo pequeño mantiene la resolución fina de siempre, uno
-    // muy grande (o el audio completo) engrosa el salto entre
-    // ventanas para no calcular millones de cuadros y trabar la página.
+    if (token !== analysisToken) return;
+
     const { fftSize, hopSize } = chooseSpectrogramParams(segment.length);
-    const spectrogramData = computeSpectrogram(
-        segment,
-        currentSampleRate,
-        fftSize,
-        hopSize
-    );
+    const spectrogramData = computeSpectrogram(segment, currentSampleRate, fftSize, hopSize);
     plotSpectrogram(spectrogram, spectrogramData);
 
-    selection = { start: startTime, end: endTime };
-    updateSelectionInfo();
+    renderInsights(metrics, spectrumData, spectrogramData, start, end);
+    if (showProgress) setProgress(96, "Actualizando indicadores…");
 }
 
-function clampSelection(start, end) {
-    const minSelection = Math.min(MIN_SELECTION_SECONDS, currentDuration);
-
-    let s = Math.max(0, Math.min(start, currentDuration));
-    let e = Math.max(0, Math.min(end, currentDuration));
-
-    if (e < s) {
-        [s, e] = [e, s];
-    }
-
-    if (e - s < minSelection) {
-        e = Math.min(currentDuration, s + minSelection);
-        s = Math.max(0, e - minSelection);
-    }
-
-    return { start: s, end: e };
+function renderWaveformStats(metrics) {
+    waveformStats.innerHTML = `
+        ${stat("RMS", formatNumber(metrics.rms, 4))}
+        ${stat("Pico |x|", formatNumber(metrics.peak, 4))}
+        ${stat("Crest factor", formatNumber(metrics.crestFactor, 2))}`;
 }
 
-function updateSelectionInfo() {
-    if (!selectionInfo || !currentDuration) {
-        return;
-    }
-
-    const { start, end } = selection;
-    const isFullFile = start <= 0.001 && end >= currentDuration - 0.001;
-
-    selectionInfo.textContent = isFullFile
-        ? `Mostrando el audio completo (${formatTime(currentDuration)}).`
-        : `Analizando ${formatTime(start)}–${formatTime(end)} de ${formatTime(currentDuration)} en total.`;
+function renderSpectrumStats(data) {
+    spectrumStats.innerHTML = `
+        ${stat("Frecuencia dominante", `${formatNumber(data.dominantFrequency, 1)} Hz`)}
+        ${stat("Centroide", `${formatNumber(data.spectralCentroid, 1)} Hz`)}
+        ${stat("NFFT", data.fftSize.toLocaleString())}`;
 }
 
-function formatTime(seconds) {
-    const totalSeconds = Math.max(0, seconds);
-    const minutes = Math.floor(totalSeconds / 60);
-    const secs = (totalSeconds % 60).toFixed(1);
-    return `${minutes}:${secs.padStart(4, "0")}`;
+function renderInsights(metrics, spectrumData, stft, start, end) {
+    insights.innerHTML = `
+        ${insight("◌", "Duración analizada", formatTime(end - start), "Región seleccionada")}
+        ${insight("⌁", "Frecuencia dominante", `${formatNumber(spectrumData.dominantFrequency, 1)} Hz`, "Máximo espectral")}
+        ${insight("∿", "Nivel RMS", formatNumber(metrics.rms, 4), "Energía media de la señal")}
+        ${insight("≈", "Resolución STFT", `${formatNumber(currentSampleRate / stft.fftSize, 1)} Hz`, `${stft.fftSize} puntos por ventana`)}`;
 }
 
-/**
- * Registra, una sola vez, el listener que escucha cuando el usuario
- * arrastra la línea de tiempo (el rangeslider bajo la forma de
- * onda) para elegir un nuevo intervalo a analizar.
- */
-function attachRangeSelectorOnce() {
-    if (waveformListenerAttached) {
-        return;
-    }
-
-    waveformListenerAttached = true;
-    waveform.on("plotly_relayout", handleWaveformRelayout);
+function stat(label, value) {
+    return `<div class="stat"><span>${label}</span><strong>${value}</strong></div>`;
+}
+function insight(icon, label, value, description) {
+    return `<div class="insight"><div class="icon">${icon}</div><span>${label}</span><strong>${value}</strong><p>${description}</p></div>`;
 }
 
-function handleWaveformRelayout(eventData) {
-    if (!currentSamples) {
-        return;
-    }
-
-    let newStart;
-    let newEnd;
-
-    if (
-        eventData["xaxis.range[0]"] !== undefined &&
-        eventData["xaxis.range[1]"] !== undefined
-    ) {
-        newStart = eventData["xaxis.range[0]"];
-        newEnd = eventData["xaxis.range[1]"];
-    } else if (Array.isArray(eventData["xaxis.range"])) {
-        [newStart, newEnd] = eventData["xaxis.range"];
-    } else if (eventData["xaxis.autorange"]) {
-        // El usuario restableció el zoom (doble clic): vuelve a
-        // mostrar todo el audio.
-        newStart = 0;
-        newEnd = currentDuration;
-    } else {
-        // Otro tipo de evento de relayout (leyenda, etc.), lo ignoramos.
-        return;
-    }
-
-    clearTimeout(relayoutTimer);
-    relayoutTimer = setTimeout(() => {
-        runSelectionAnalysis(newStart, newEnd);
-    }, RELAYOUT_DEBOUNCE_MS);
-}
-
-async function runSelectionAnalysis(rawStart, rawEnd) {
-    const { start, end } = clampSelection(rawStart, rawEnd);
-
-    // Si el intervalo prácticamente no cambió, no recalculamos nada.
-    if (
-        Math.abs(start - selection.start) < 0.05 &&
-        Math.abs(end - selection.end) < 0.05
-    ) {
-        return;
-    }
-
-    loadingText.textContent = "Analizando intervalo seleccionado...";
-    showLoading("Extrayendo intervalo…");
-
-    try {
-        await computeAndPlotForRange(start, end, { reportProgress: setProgress });
-        setProgress(100, "Listo");
-        setTimeout(hideLoading, 300);
-    } catch (error) {
-        console.error("Error al analizar el intervalo:", error);
-        setLoadingError("No fue posible analizar ese intervalo.");
-    }
-}
-
-
-/* ==========================================================
-   Grabación
-   ========================================================== */
+// ------------------------------------------------------------
+// Grabación
+// ------------------------------------------------------------
 
 async function handleRecordClick() {
-    if (!isRecording) {
-        await startRecording();
-    } else {
-        await stopRecording();
-    }
+    if (isRecording) await stopRecording();
+    else await startRecording();
 }
 
 async function startRecording() {
     recordButton.disabled = true;
     recordStatus.textContent = "Solicitando acceso al micrófono…";
-
     try {
         activeRecorder = await createRecorder();
     } catch (error) {
-        console.error("Error al acceder al micrófono:", error);
         recordStatus.textContent = describeMicError(error);
         recordButton.disabled = false;
         return;
@@ -435,77 +246,109 @@ async function startRecording() {
     isRecording = true;
     recordButton.disabled = false;
     recordButton.setAttribute("aria-pressed", "true");
-    recordButtonText.textContent = "Detener";
-    recordStatus.textContent = "Grabando…";
-
+    recordButtonText.textContent = "Detener grabación";
+    recordStatus.textContent = "Grabando en tiempo real…";
     liveSpectrum.classList.remove("hidden");
     startLiveVisualization(activeRecorder.analyser);
-
     activeRecorder.start();
 }
 
 async function stopRecording() {
-    if (!activeRecorder) {
-        return;
-    }
-
+    if (!activeRecorder) return;
     isRecording = false;
     recordButton.disabled = true;
     recordButton.setAttribute("aria-pressed", "false");
-    recordButtonText.textContent = "Grabar";
-    recordStatus.textContent = "Procesando grabación…";
-
+    recordButtonText.textContent = "Grabar con micrófono";
+    recordStatus.textContent = "Preparando grabación…";
     stopLiveVisualization();
     liveSpectrum.classList.add("hidden");
 
-    const blob = await activeRecorder.stop();
-    activeRecorder = null;
-    recordButton.disabled = false;
-
-    const extension = blob.type.includes("ogg") ? "ogg" : "webm";
-    const file = new File([blob], `grabacion-${Date.now()}.${extension}`, {
-        type: blob.type
-    });
-
-    await processAudioFile(file, {
-        onSuccess: () => {
-            recordStatus.textContent = "Grabación lista.";
-        },
-        onError: () => {
-            recordStatus.textContent = "Error al procesar la grabación.";
-        }
-    });
+    try {
+        const blob = await activeRecorder.stop();
+        activeRecorder = null;
+        const extension = blob.type.includes("ogg") ? "ogg" : "webm";
+        const file = new File([blob], `grabacion-${Date.now()}.${extension}`, { type: blob.type });
+        await processAudioFile(file, {
+            onSuccess: () => recordStatus.textContent = "Grabación lista para explorar."
+        });
+    } catch (error) {
+        recordStatus.textContent = "No fue posible completar la grabación.";
+    } finally {
+        recordButton.disabled = false;
+    }
 }
 
 function startLiveVisualization(analyser) {
     const ctx = liveSpectrum.getContext("2d");
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
+    const data = new Uint8Array(analyser.frequencyBinCount);
     const { width, height } = liveSpectrum;
 
     function draw() {
         vizAnimationId = requestAnimationFrame(draw);
-        analyser.getByteFrequencyData(dataArray);
-
+        analyser.getByteFrequencyData(data);
         ctx.clearRect(0, 0, width, height);
-
-        const barWidth = (width / bufferLength) * 2.5;
-        let x = 0;
-
-        for (let i = 0; i < bufferLength; i++) {
-            const barHeight = (dataArray[i] / 255) * height;
-            ctx.fillStyle = `hsl(${38 + (dataArray[i] / 255) * 25}, 75%, ${50 + (dataArray[i] / 255) * 15}%)`;
-            ctx.fillRect(x, height - barHeight, barWidth, barHeight);
-            x += barWidth + 1;
+        const barWidth = width / data.length;
+        for (let i = 0; i < data.length; i++) {
+            const h = data[i] / 255 * height;
+            const hue = 145 - data[i] / 255 * 105;
+            ctx.fillStyle = `hsl(${hue}, 55%, 55%)`;
+            ctx.fillRect(i * barWidth, height - h, Math.max(1, barWidth - 1), h);
         }
     }
-
     draw();
 }
-
 function stopLiveVisualization() {
-    if (vizAnimationId !== null) {
-        cancelAnimationFrame(vizAnimationId);
-        vizAnimationId = null;
-    }
+    if (vizAnimationId !== null) cancelAnimationFrame(vizAnimationId);
+    vizAnimationId = null;
+}
+
+// ------------------------------------------------------------
+// UI helpers
+// ------------------------------------------------------------
+
+function showLoading(stage = "Iniciando…") {
+    loading.classList.remove("hidden", "error");
+    loadingIdle.classList.add("hidden");
+    loadingText.textContent = "Procesando audio…";
+    setIndeterminate(stage);
+}
+function hideLoading() {
+    loading.classList.add("hidden");
+    loadingIdle.classList.remove("hidden");
+}
+function setProgress(percent, stage) {
+    const value = Math.max(0, Math.min(100, percent));
+    loadingProgress.classList.remove("indeterminate");
+    loadingProgress.style.width = `${value}%`;
+    loadingBar.setAttribute("aria-valuenow", String(Math.round(value)));
+    loadingPercent.textContent = `${Math.round(value)}%`;
+    if (stage) loadingStage.textContent = stage;
+}
+function setIndeterminate(stage) {
+    loadingProgress.classList.add("indeterminate");
+    loadingPercent.textContent = "…";
+    loadingBar.removeAttribute("aria-valuenow");
+    loadingStage.textContent = stage;
+}
+function setLoadingError(message) {
+    loading.classList.add("error");
+    loadingText.textContent = "No se pudo procesar";
+    loadingStage.textContent = message;
+    loadingPercent.textContent = "";
+}
+function nextFrame() { return new Promise(resolve => requestAnimationFrame(resolve)); }
+function formatTime(seconds) {
+    const total = Math.max(0, seconds);
+    const hours = Math.floor(total / 3600);
+    const minutes = Math.floor((total % 3600) / 60);
+    const secs = Math.floor(total % 60);
+    if (hours > 0) return `${hours}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+    return `${minutes}:${String(secs).padStart(2, "0")}`;
+}
+function formatNumber(value, digits) {
+    if (!Number.isFinite(value)) return "—";
+    return value.toLocaleString("es-CO", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+}
+function escapeHTML(value) {
+    return String(value).replace(/[&<>'"]/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[char]));
 }

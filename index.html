@@ -3,111 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Cicadas — Análisis acústico</title>
+    <meta name="description" content="Cicadas: herramienta educativa para explorar señales acústicas de cigarras mediante forma de onda, FFT y STFT.">
+    <title>Cicadas — Laboratorio acústico</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/loading.css">
 
-    <!-- Plotly -->
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 </head>
 
 <body>
-
 <header class="site-header">
-    <div class="brand">
-        <svg class="brand-mark" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path d="M24 34c-6-4-10-10-10-16a10 10 0 0 1 20 0c0 6-4 12-10 16Z" stroke="currentColor" stroke-width="2"/>
-            <path d="M8 20c2-4 5-6 8-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <path d="M4 15c3-6 8-9 13-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
-            <path d="M40 20c-2-4-5-6-8-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <path d="M44 15c-3-6-8-9-13-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
-        </svg>
-        <div class="brand-text">
-            <h1>Cicadas</h1>
-            <p>Análisis acústico de cigarras</p>
-        </div>
+    <div class="header-inner">
+        <a class="brand" href="#top" aria-label="Cicadas, inicio">
+            <span class="brand-mark-wrap" aria-hidden="true">
+                <svg class="brand-mark" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M24 34c-6-4-10-10-10-16a10 10 0 0 1 20 0c0 6-4 12-10 16Z" stroke="currentColor" stroke-width="2"/>
+                    <path d="M8 20c2-4 5-6 8-6M4 15c3-6 8-9 13-9M40 20c-2-4-5-6-8-6M44 15c-3-6-8-9-13-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".65"/>
+                    <path d="M19 37h10M21 41h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </span>
+            <span class="brand-text">
+                <strong>Cicadas</strong>
+                <span>Laboratorio de acústica bioinspirada</span>
+            </span>
+        </a>
+
+        <nav class="site-nav" aria-label="Navegación principal">
+            <a href="#analisis">Análisis</a>
+            <a href="#teoria">Teoría</a>
+            <a href="#metodologia">Metodología</a>
+        </nav>
     </div>
 </header>
 
-
-<div class="app-shell">
-
+<div class="app-shell" id="top">
     <aside class="control-panel">
+        <div class="panel-intro">
+            <span class="eyebrow">LABORATORIO DIGITAL</span>
+            <h1>Explora el sonido.</h1>
+            <p>Convierte una grabación en evidencia visual para estudiar frecuencia, amplitud y evolución temporal.</p>
+        </div>
 
-        <section class="panel-block">
-            <h2>Entrada de audio</h2>
-
-            <div class="control-group">
-                <label for="audioFile">Subir archivo</label>
-                <input
-                        type="file"
-                        id="audioFile"
-                        accept="audio/*"
-                >
+        <section class="panel-block input-block">
+            <div class="panel-heading">
+                <span class="step-number">01</span>
+                <div>
+                    <h2>Entrada</h2>
+                    <p>Carga una grabación o usa el micrófono.</p>
+                </div>
             </div>
 
-            <div class="control-divider" role="separator" aria-label="o"><span>o</span></div>
+            <label class="upload-zone" for="audioFile">
+                <span class="upload-icon" aria-hidden="true">↥</span>
+                <strong>Seleccionar audio</strong>
+                <span>WAV, MP3, OGG, WebM y otros formatos compatibles</span>
+                <input type="file" id="audioFile" accept="audio/*">
+            </label>
 
-            <div class="control-group">
-                <button id="recordButton" aria-pressed="false">
-                    <span class="record-icon" aria-hidden="true">🎙</span>
-                    <span id="recordButtonText">Grabar</span>
-                </button>
-                <p id="recordStatus" class="record-status" aria-live="polite"></p>
-                <canvas
-                        id="liveSpectrum"
-                        class="live-spectrum hidden"
-                        width="280"
-                        height="70"
-                        aria-hidden="true"
-                ></canvas>
-            </div>
+            <div class="control-divider"><span>o</span></div>
+
+            <button id="recordButton" class="record-button" aria-pressed="false">
+                <span class="record-dot" aria-hidden="true"></span>
+                <span id="recordButtonText">Grabar con micrófono</span>
+            </button>
+            <p id="recordStatus" class="record-status" aria-live="polite"></p>
+            <canvas id="liveSpectrum" class="live-spectrum hidden" width="280" height="70" aria-hidden="true"></canvas>
         </section>
 
-        <section class="panel-block">
-            <h2>Progreso</h2>
+        <section class="panel-block progress-block">
+            <div class="panel-heading compact">
+                <span class="step-number">02</span>
+                <div><h2>Procesamiento</h2></div>
+            </div>
 
             <div id="loading" class="loading hidden" aria-live="polite">
-
                 <div class="loading-header">
                     <p id="loadingText">Procesando audio...</p>
                     <span id="loadingPercent" class="loading-percent">0%</span>
                 </div>
-
-                <div
-                        class="loading-bar"
-                        role="progressbar"
-                        aria-valuemin="0"
-                        aria-valuemax="100"
-                        aria-valuenow="0"
-                        id="loadingBar"
-                >
+                <div class="loading-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="loadingBar">
                     <div id="loadingProgress" class="loading-progress"></div>
                 </div>
-
                 <p id="loadingStage" class="loading-stage">Iniciando…</p>
-
             </div>
-
-            <p id="loadingIdle" class="loading-idle">Sin actividad por ahora.</p>
+            <p id="loadingIdle" class="loading-idle">Listo para analizar.</p>
         </section>
 
+        <div class="panel-footer">
+            <span class="status-dot"></span>
+            <span>Análisis local · tus archivos no se suben a un servidor</span>
+        </div>
     </aside>
 
+    <main class="workspace" id="analisis">
+        <section class="hero-card">
+            <div>
+                <span class="eyebrow dark">ANÁLISIS ACÚSTICO</span>
+                <h2>De una señal a un paisaje sonoro</h2>
+                <p>Observa la misma grabación desde tres perspectivas complementarias: tiempo, frecuencia y tiempo–frecuencia.</p>
+            </div>
+            <div class="hero-badge">
+                <span>FFT</span><span>STFT</span><span>RMS</span>
+            </div>
+        </section>
 
-    <main class="workspace">
-
-        <section class="sheet">
-            <h2>Registro actual</h2>
+        <section class="sheet recording-sheet">
+            <div class="section-heading">
+                <div>
+                    <span class="section-kicker">REGISTRO</span>
+                    <h2>Audio actual</h2>
+                </div>
+                <span id="audioBadge" class="badge neutral">Sin audio</span>
+            </div>
 
             <div id="audioInfo">
-                <p class="empty-state">No se ha cargado ningún audio todavía. Sube un archivo o graba con el micrófono para empezar.</p>
+                <p class="empty-state">Carga una grabación para comenzar. Para audios largos podrás navegar por toda la señal y seleccionar solamente el intervalo que quieras estudiar.</p>
             </div>
 
             <div id="audioPlayback" class="audio-playback hidden">
@@ -116,35 +131,142 @@
             </div>
         </section>
 
-        <section class="sheet plot-section">
-            <h2>Forma de onda</h2>
-            <p class="section-note">
-                Arrastra los extremos de la barra debajo de la gráfica para elegir
-                el intervalo que se analiza en detalle. Útil con grabaciones largas:
-                un intervalo más corto se procesa más rápido.
-            </p>
-            <div id="waveform" class="plot-container"></div>
-            <p id="selectionInfo" class="selection-info" aria-live="polite"></p>
+        <section class="sheet timeline-sheet" id="timelineSection">
+            <div class="section-heading timeline-heading">
+                <div>
+                    <span class="section-kicker">NAVEGACIÓN</span>
+                    <h2>Selecciona el intervalo</h2>
+                    <p class="section-note">La vista general representa todo el audio. El análisis detallado solo utiliza la región seleccionada.</p>
+                </div>
+                <div class="selection-readout">
+                    <span>Intervalo</span>
+                    <strong id="selectionTime">—</strong>
+                </div>
+            </div>
+
+            <div class="timeline-wrap">
+                <canvas id="timelineCanvas" width="1200" height="120" aria-label="Resumen temporal del audio"></canvas>
+                <div id="timelineSelection" class="timeline-selection" aria-hidden="true"></div>
+                <input type="range" id="timelineStart" min="0" max="100" value="0" step="0.01" aria-label="Inicio del intervalo">
+                <input type="range" id="timelineEnd" min="0" max="100" value="100" step="0.01" aria-label="Fin del intervalo">
+            </div>
+            <div class="timeline-meta">
+                <span id="timelineStartLabel">0:00</span>
+                <span id="timelineHint">Arrastra los marcadores para elegir una región</span>
+                <span id="timelineEndLabel">0:00</span>
+            </div>
         </section>
 
-        <section class="sheet plot-section">
-            <h2>Espectro</h2>
-            <p class="section-note">Promedio del espectro de amplitud a lo largo del intervalo seleccionado arriba.</p>
-            <div id="spectrum" class="plot-container"></div>
+        <section class="analysis-grid">
+            <section class="sheet plot-section waveform-sheet">
+                <div class="section-heading">
+                    <div>
+                        <span class="section-kicker">DOMINIO TEMPORAL</span>
+                        <h2>Forma de onda</h2>
+                    </div>
+                    <span class="plot-chip">x(t)</span>
+                </div>
+                <p class="section-note">La amplitud muestra cómo cambia la presión/señal registrada con el tiempo. El marcador identifica el mayor valor absoluto observado en el intervalo.</p>
+                <div id="waveform" class="plot-container"></div>
+                <div id="waveformStats" class="stats-strip"></div>
+            </section>
+
+            <section class="sheet plot-section spectrum-sheet">
+                <div class="section-heading">
+                    <div>
+                        <span class="section-kicker">DOMINIO FRECUENCIAL</span>
+                        <h2>Espectro FFT</h2>
+                    </div>
+                    <span class="plot-chip">X(f)</span>
+                </div>
+                <p class="section-note">El espectro promedio revela qué frecuencias dominan el intervalo seleccionado. La frecuencia principal aparece marcada.</p>
+                <div id="spectrum" class="plot-container"></div>
+                <div id="spectrumStats" class="stats-strip"></div>
+            </section>
         </section>
 
-        <section class="sheet plot-section">
-            <h2>Sonograma</h2>
-            <p class="section-note">Corresponde al mismo intervalo seleccionado en la forma de onda.</p>
+        <section class="sheet plot-section spectrogram-sheet">
+            <div class="section-heading">
+                <div>
+                    <span class="section-kicker">TIEMPO–FRECUENCIA</span>
+                    <h2>Sonograma · STFT</h2>
+                </div>
+                <span class="plot-chip">X(t,f)</span>
+            </div>
+            <p class="section-note">Cada color representa la energía de una banda de frecuencia en un instante. Esta vista permite observar patrones, pulsos, armónicos y cambios en la vocalización.</p>
             <div id="spectrogram" class="plot-container plot-container--tall"></div>
+            <div class="legend-note"><span class="legend-swatch"></span> Intensidad relativa en decibelios (dB)</div>
         </section>
 
-    </main>
+        <section class="sheet insights-sheet">
+            <div class="section-heading">
+                <div>
+                    <span class="section-kicker">LECTURA RÁPIDA</span>
+                    <h2>Perfil acústico</h2>
+                </div>
+            </div>
+            <div id="insights" class="insights-grid">
+                <div class="insight-empty">Los indicadores aparecerán cuando exista un intervalo analizado.</div>
+            </div>
+        </section>
 
+        <section class="theory-section" id="teoria">
+            <div class="theory-intro">
+                <span class="section-kicker">TEORÍA</span>
+                <h2>¿Qué estamos viendo?</h2>
+                <p>No hace falta ser especialista en procesamiento digital de señales para interpretar las gráficas. Estas tres herramientas describen la misma señal desde preguntas diferentes.</p>
+            </div>
+
+            <div class="theory-grid">
+                <article class="theory-card">
+                    <span class="theory-number">01</span>
+                    <h3>Forma de onda</h3>
+                    <div class="equation">x(t)</div>
+                    <p>Representa la señal en el tiempo. Permite observar amplitud, pulsos, periodicidad y cambios rápidos.</p>
+                    <span class="theory-question">Pregunta guía: ¿cómo cambia la señal?</span>
+                </article>
+
+                <article class="theory-card featured">
+                    <span class="theory-number">02</span>
+                    <h3>Transformada de Fourier</h3>
+                    <div class="equation">X(f) = 𝓕{x(t)}</div>
+                    <p>Descompone la señal en componentes de frecuencia. Un máximo espectral indica una frecuencia con gran contribución energética.</p>
+                    <span class="theory-question">Pregunta guía: ¿qué frecuencias aparecen?</span>
+                </article>
+
+                <article class="theory-card">
+                    <span class="theory-number">03</span>
+                    <h3>STFT / sonograma</h3>
+                    <div class="equation">X(τ,f)</div>
+                    <p>Calcula Fourier sobre ventanas cortas que se desplazan en el tiempo. Así podemos saber cuándo aparece cada componente.</p>
+                    <span class="theory-question">Pregunta guía: ¿cómo evolucionan las frecuencias?</span>
+                </article>
+            </div>
+
+            <div class="biology-callout">
+                <div class="callout-icon">✦</div>
+                <div>
+                    <strong>Conexión con biología</strong>
+                    <p>Las vocalizaciones animales pueden funcionar como señales de comunicación, reconocimiento o competencia. La frecuencia dominante, la estructura de armónicos, la duración y la repetición temporal son características que pueden ayudar a comparar individuos, especies o comportamientos.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="method-section" id="metodologia">
+            <div>
+                <span class="section-kicker">METODOLOGÍA</span>
+                <h2>Un pequeño laboratorio reproducible</h2>
+            </div>
+            <div class="method-steps">
+                <div><span>1</span><p><strong>Registrar</strong><br>carga o graba la señal.</p></div>
+                <div><span>2</span><p><strong>Seleccionar</strong><br>elige un intervalo representativo.</p></div>
+                <div><span>3</span><p><strong>Transformar</strong><br>FFT y STFT revelan su estructura.</p></div>
+                <div><span>4</span><p><strong>Interpretar</strong><br>relaciona patrones acústicos con la pregunta biológica.</p></div>
+            </div>
+        </section>
+    </main>
 </div>
 
-
 <script type="module" src="src/app.js"></script>
-
 </body>
 </html>

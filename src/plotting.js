@@ -1,187 +1,149 @@
-/* ==========================================================
-   Configuración común
-   ========================================================== */
-
 const plotConfig = {
     responsive: true,
     displaylogo: false,
-    modeBarButtonsToRemove: [
-        "lasso2d",
-        "select2d"
-    ]
+    displayModeBar: true,
+    modeBarButtonsToRemove: ["lasso2d", "select2d", "autoScale2d"],
+    scrollZoom: false
 };
 
-// Fuerza a Plotly a recalcular sus dimensiones justo después de
-// pintar. Evita que el gráfico quede "congelado" con un tamaño
-// viejo (por ejemplo si la tipografía web todavía estaba cargando
-// o el layout de la página se acomodó después) y termine
-// desbordando el recuadro que lo contiene.
+const colors = {
+    ink: "#16241e",
+    soft: "#5c6d64",
+    grid: "rgba(40,65,53,.10)",
+    teal: "#147d6b",
+    gold: "#d9a441",
+    coral: "#c65d4d",
+    purple: "#7057a3",
+    blue: "#3d5a80"
+};
+
+const commonLayout = {
+    autosize: true,
+    font: { family: "DM Sans, Arial, sans-serif", color: colors.ink, size: 11 },
+    paper_bgcolor: "transparent",
+    plot_bgcolor: "transparent",
+    margin: { l: 58, r: 20, t: 20, b: 52 },
+    hoverlabel: { bgcolor: "#16241e", font: { color: "white" } },
+    showlegend: false
+};
+
 function resizeSoon(container) {
     requestAnimationFrame(() => {
-        Plotly.Plots.resize(container);
+        if (container?.data) Plotly.Plots.resize(container);
     });
 }
 
-const commonLayout = {
-    font: {
-        family: "Public Sans, Arial, sans-serif"
-    },
-    paper_bgcolor: "transparent",
-    plot_bgcolor: "transparent",
-    margin: {
-        l: 60,
-        r: 20,
-        t: 20,
-        b: 50
-    }
-};
+function axis(title, extra = {}) {
+    return {
+        title: { text: title, font: { size: 11 } },
+        gridcolor: colors.grid,
+        zerolinecolor: colors.grid,
+        fixedrange: false,
+        ...extra
+    };
+}
 
-
-/* ==========================================================
-   Forma de onda
-   ========================================================== */
-
-/**
- * options.enableRangeSlider: agrega la barra de selección de
- * intervalo bajo la forma de onda (nuestra "línea de tiempo").
- * options.initialRange: [inicio, fin] en segundos a mostrar
- * seleccionado inicialmente en esa barra.
- */
-export function plotWaveform(
-    container,
-    samples,
-    sampleRate,
-    options = {}
-) {
-
+export function plotWaveform(container, samples, sampleRate, options = {}) {
     const maxPoints = 5000;
-
-    let step = Math.ceil(
-        samples.length / maxPoints
-    );
-
+    const step = Math.max(1, Math.ceil(samples.length / maxPoints));
     const time = [];
-    const amplitude = [];
+    const upper = [];
+    const lower = [];
 
-    for (let i = 0; i < samples.length; i += step) {
-
-        time.push(i / sampleRate);
-        amplitude.push(samples[i]);
+    for (let start = 0; start < samples.length; start += step) {
+        const end = Math.min(samples.length, start + step);
+        let min = Infinity, max = -Infinity;
+        for (let i = start; i < end; i++) {
+            min = Math.min(min, samples[i]);
+            max = Math.max(max, samples[i]);
+        }
+        time.push((start + (end - start) / 2) / sampleRate);
+        upper.push(max);
+        lower.push(min);
     }
 
-    const trace = {
-        x: time,
-        y: amplitude,
+    const envelope = {
+        x: [...time, ...time.slice().reverse()],
+        y: [...upper, ...lower.slice().reverse()],
         type: "scatter",
         mode: "lines",
-        line: {
-            width: 1
-        },
-        name: "Amplitud"
+        fill: "toself",
+        fillcolor: "rgba(20,125,107,.13)",
+        line: { color: "rgba(20,125,107,.25)", width: 1 },
+        hoverinfo: "skip"
     };
 
-    const xaxis = {
-        title: "Tiempo (s)"
+    const center = {
+        x: time,
+        y: upper.map((v, i) => (v + lower[i]) / 2),
+        type: "scatter",
+        mode: "lines",
+        line: { color: colors.teal, width: 1.25 },
+        name: "Señal"
     };
 
-    if (options.enableRangeSlider) {
-        xaxis.rangeslider = {
-            visible: true,
-            thickness: 0.16,
-            bgcolor: "#EDEFE9",
-            bordercolor: "#A9B7AC",
-            borderwidth: 1
-        };
-    }
-
-    if (options.initialRange) {
-        xaxis.range = options.initialRange;
-    }
+    const absPeakIndex = samples.reduce((best, value, index) =>
+        Math.abs(value) > Math.abs(samples[best]) ? index : best, 0);
+    const peak = {
+        x: [absPeakIndex / sampleRate],
+        y: [samples[absPeakIndex]],
+        type: "scatter",
+        mode: "markers",
+        marker: { size: 9, color: colors.gold, line: { color: "white", width: 2 } },
+        name: "Máximo"
+    };
 
     const layout = {
         ...commonLayout,
-        xaxis,
-        yaxis: {
-            title: "Amplitud"
-        }
+        xaxis: axis("Tiempo (s)", { rangeslider: { visible: false } }),
+        yaxis: axis("Amplitud", { zeroline: true }),
+        hovermode: "x unified",
+        shapes: [{ type: "line", x0: 0, x1: 1, xref: "paper", y0: 0, y1: 0, line: { color: colors.grid, width: 1 } }]
     };
 
-    Plotly.react(
-        container,
-        [trace],
-        layout,
-        plotConfig
-    );
-
+    Plotly.react(container, [envelope, center, peak], layout, plotConfig);
     resizeSoon(container);
 }
 
-
-/* ==========================================================
-   Espectro
-   ========================================================== */
-
-export function plotSpectrum(
-    container,
-    spectrum
-) {
+export function plotSpectrum(container, spectrum) {
+    const peakIndex = spectrum.amplitudes.indexOf(spectrum.dominantAmplitude);
+    const peakFrequency = spectrum.frequencies[peakIndex];
 
     const trace = {
         x: spectrum.frequencies,
         y: spectrum.amplitudes,
         type: "scatter",
         mode: "lines",
-        line: {
-            width: 1.5
-        },
+        line: { color: colors.purple, width: 1.7 },
+        fill: "tozeroy",
+        fillcolor: "rgba(112,87,163,.08)",
         name: "Espectro"
+    };
+
+    const marker = {
+        x: [peakFrequency],
+        y: [spectrum.dominantAmplitude],
+        type: "scatter",
+        mode: "markers",
+        marker: { size: 10, color: colors.gold, line: { color: "white", width: 2 } },
+        text: [`Dominante: ${peakFrequency.toFixed(1)} Hz`],
+        hovertemplate: "%{text}<br>Amplitud: %{y:.4f}<extra></extra>"
     };
 
     const layout = {
         ...commonLayout,
-        xaxis: {
-            title: "Frecuencia (Hz)",
-            rangemode: "tozero"
-        },
-        yaxis: {
-            title: "Amplitud"
-        }
+        xaxis: axis("Frecuencia (Hz)", { rangemode: "tozero" }),
+        yaxis: axis("Amplitud", { rangemode: "tozero" }),
+        hovermode: "x"
     };
 
-    Plotly.react(
-        container,
-        [trace],
-        layout,
-        plotConfig
-    );
-
+    Plotly.react(container, [trace, marker], layout, plotConfig);
     resizeSoon(container);
 }
 
-
-/* ==========================================================
-   Sonograma
-   ========================================================== */
-
-export function plotSpectrogram(
-    container,
-    spectrogram
-) {
-
-    // Plotly espera:
-    // z[y][x]
-    //
-    // Nuestra matriz está organizada como:
-    // frame -> frecuencia
-    //
-    // Por eso la transponemos.
-
-    const z = spectrogram.frequencies.map(
-        (_, frequencyIndex) =>
-            spectrogram.times.map(
-                (_, timeIndex) =>
-                    spectrogram.values[timeIndex][frequencyIndex]
-            )
+export function plotSpectrogram(container, spectrogram) {
+    const z = spectrogram.frequencies.map((_, k) =>
+        spectrogram.times.map((_, t) => spectrogram.values[t][k])
     );
 
     const trace = {
@@ -189,27 +151,26 @@ export function plotSpectrogram(
         y: spectrogram.frequencies,
         z,
         type: "heatmap",
+        colorscale: "Viridis",
+        zmin: spectrogram.minDb,
+        zmax: spectrogram.maxDb,
+        zsmooth: false,
         colorbar: {
-            title: "dB"
-        }
+            title: { text: "dB", side: "right" },
+            thickness: 12,
+            len: .82,
+            tickfont: { size: 9 }
+        },
+        hovertemplate: "Tiempo: %{x:.2f} s<br>Frecuencia: %{y:.0f} Hz<br>Nivel: %{z:.1f} dB<extra></extra>"
     };
 
     const layout = {
         ...commonLayout,
-        xaxis: {
-            title: "Tiempo (s)"
-        },
-        yaxis: {
-            title: "Frecuencia (Hz)"
-        }
+        margin: { l: 62, r: 58, t: 20, b: 52 },
+        xaxis: axis("Tiempo (s)"),
+        yaxis: axis("Frecuencia (Hz)", { rangemode: "tozero" })
     };
 
-    Plotly.react(
-        container,
-        [trace],
-        layout,
-        plotConfig
-    );
-
+    Plotly.react(container, [trace], layout, plotConfig);
     resizeSoon(container);
 }

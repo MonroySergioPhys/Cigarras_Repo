@@ -26,8 +26,8 @@ button, input { font: inherit; }
 a { color: inherit; }
 .hidden { display: none !important; }
 
-.site-header { position: sticky; top: 0; z-index: 20; background: rgba(16,42,32,.96); color: var(--white); border-bottom: 1px solid rgba(255,255,255,.08); backdrop-filter: blur(14px); min-height: 100px; }
-.header-inner { max-width: 1440px; margin: auto; min-height: 78px; padding: 0 34px; display: flex; align-items: center; justify-content: space-between; gap: 30px; }
+.site-header { position: sticky; top: 0; z-index: 20; background: rgba(16,42,32,.96); color: var(--white); border-bottom: 1px solid rgba(255,255,255,.08); backdrop-filter: blur(14px); min-height: 70px; }
+.header-inner { max-width: 1440px; margin: auto; min-height: 70px; padding: 0 34px; display: flex; align-items: center; justify-content: space-between; gap: 30px; }
 .brand { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; }
 .brand-mark-wrap { width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid rgba(217,164,65,.4); border-radius: 12px; background: rgba(217,164,65,.08); }
 .brand-mark { width: 30px; color: var(--gold); }
@@ -40,50 +40,20 @@ a { color: inherit; }
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 18px;
-    height: 80px;
+    gap: 16px;
+    height: 70px;
     margin-left: auto;
-    margin-right: 8px;
+    margin-right: 12px;
 }
 
 .institution-logos img {
-    height: 60px;
-    width: auto;
-    max-width: 100px;
+    height: 50px !important;
+    max-height: 50px !important;
+    width: auto !important;
+    max-width: 90px !important;
     object-fit: contain;
     display: block;
-}
-
-.logo-placeholder {
-    width: 62px;
-    height: 46px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    border: 1px dashed rgba(255,255,255,.35);
-    border-radius: 8px;
-    background: rgba(255,255,255,.045);
-    color: #dce6df;
-}
-
-.logo-placeholder span {
-    font-family: var(--mono);
-    font-size: .65rem;
-    font-weight: 600;
-}
-
-.logo-placeholder small {
-    font-size: .52rem;
-    color: #aebeb4;
-}
-
-.logo-placeholder img {
-    display: block;
-    max-width: 52px;
-    max-height: 38px;
-    object-fit: contain;
+    flex-shrink: 0;
 }
 
 .site-nav { display: flex; gap: 8px; }
@@ -91,7 +61,7 @@ a { color: inherit; }
 .site-nav a:hover { color: white; background: rgba(255,255,255,.07); }
 
 .app-shell { max-width: 1440px; margin: auto; display: grid; grid-template-columns: 300px minmax(0,1fr); align-items: start; }
-.control-panel { position: sticky; top: 78px; min-height: calc(100vh - 78px); padding: 30px 22px; background: var(--forest); color: #edf3ee; display: flex; flex-direction: column; gap: 28px; }
+.control-panel { position: sticky; top: 70px; min-height: calc(100vh - 70px); padding: 30px 22px; background: var(--forest); color: #edf3ee; display: flex; flex-direction: column; gap: 28px; }
 .panel-intro { padding: 2px 3px 6px; }
 .eyebrow, .section-kicker { display: inline-block; font-family: var(--mono); font-size: .67rem; font-weight: 600; letter-spacing: .13em; text-transform: uppercase; }
 .eyebrow { color: #b9c9be; }

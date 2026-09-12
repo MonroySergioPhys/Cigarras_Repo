@@ -44,6 +44,7 @@ let currentDuration = 0;
 let currentFile = null;
 let analysisTimer = null;
 let analysisToken = 0;
+let spectrogramRevision = 0;
 let isRecording = false;
 let activeRecorder = null;
 let vizAnimationId = null;
@@ -91,7 +92,10 @@ async function processAudioFile(file, callbacks = {}) {
         setProgress(28, "Construyendo navegación temporal…");
         await nextFrame();
         timelineSection.classList.remove("hidden");
-        initializeTimeline(samples, currentDuration, scheduleRangeAnalysis);
+        initializeTimeline(samples, currentDuration, scheduleRangeAnalysis, {
+            initialSelectionSeconds: DEFAULT_WINDOW_SECONDS,
+            maxSelectionSeconds: MAX_AUTO_ANALYSIS_SECONDS
+        });
 
         setProgress(45, "Preparando forma de onda…");
         await nextFrame();
@@ -99,6 +103,7 @@ async function processAudioFile(file, callbacks = {}) {
 
         // Para un archivo corto se analiza completo; para uno largo se usa
         // una ventana inicial pequeña y el usuario decide qué estudiar.
+        clearTimeout(analysisTimer);
         const end = currentDuration <= DEFAULT_WINDOW_SECONDS ? currentDuration : initialEnd;
         await analyzeRange(0, end, { showProgress: true });
 
@@ -139,7 +144,10 @@ function setupPlayback(file) {
 
 function scheduleRangeAnalysis(start, end) {
     clearTimeout(analysisTimer);
-    analysisTimer = setTimeout(() => analyzeRange(start, end, { showProgress: true }), 300);
+    analysisToken++; // invalida cualquier análisis pendiente/anterior
+    analysisTimer = setTimeout(() => {
+        analyzeRange(start, end, { showProgress: true });
+    }, 220);
 }
 
 async function analyzeRange(startTime, endTime, { showProgress = false } = {}) {
@@ -161,6 +169,7 @@ async function analyzeRange(startTime, endTime, { showProgress = false } = {}) {
     }
 
     const token = ++analysisToken;
+    const revision = ++spectrogramRevision;
     const startIdx = Math.floor(start * currentSampleRate);
     const endIdx = Math.min(currentSamples.length, Math.ceil(end * currentSampleRate));
     const segment = currentSamples.subarray(startIdx, endIdx);
@@ -188,7 +197,7 @@ async function analyzeRange(startTime, endTime, { showProgress = false } = {}) {
 
     const { fftSize, hopSize } = chooseSpectrogramParams(segment.length);
     const spectrogramData = computeSpectrogram(segment, currentSampleRate, fftSize, hopSize);
-    plotSpectrogram(spectrogram, spectrogramData);
+    plotSpectrogram(spectrogram, spectrogramData, { revision });
 
     renderInsights(metrics, spectrumData, spectrogramData, start, end);
     if (showProgress) setProgress(96, "Actualizando indicadores…");

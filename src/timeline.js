@@ -11,14 +11,17 @@ let duration = 0;
 let samples = null;
 let callback = null;
 let resizeObserver = null;
+let maxSelectionSeconds = 60;
 
-export function initializeTimeline(audioSamples, audioDuration, onSelectionChange) {
+export function initializeTimeline(audioSamples, audioDuration, onSelectionChange, options = {}) {
     samples = audioSamples;
     duration = audioDuration;
     callback = onSelectionChange;
+    maxSelectionSeconds = Math.max(1, Math.min(options.maxSelectionSeconds ?? 60, duration));
 
+    const initialSeconds = Math.min(options.initialSelectionSeconds ?? 20, duration);
     startInput.value = 0;
-    endInput.value = 100;
+    endInput.value = duration > 0 ? (initialSeconds / duration) * 100 : 100;
     drawOverview();
     updateSelection();
 
@@ -83,6 +86,8 @@ function getSelectionPercent() {
 function updateSelection() {
     let start = Number(startInput.value);
     let end = Number(endInput.value);
+    const active = document.activeElement === startInput ? "start" : "end";
+    const maxGap = duration ? (maxSelectionSeconds / duration) * 100 : 100;
     const minGap = duration ? Math.min(1 / duration * 100, 100) : 0.1;
 
     if (end - start < minGap) {
@@ -92,6 +97,16 @@ function updateSelection() {
         } else {
             end = Math.min(100, start + minGap);
             endInput.value = end;
+        }
+    }
+
+    if (end - start > maxGap) {
+        if (active === "start") {
+            start = end - maxGap;
+            startInput.value = Math.max(0, start);
+        } else {
+            end = start + maxGap;
+            endInput.value = Math.min(100, end);
         }
     }
 

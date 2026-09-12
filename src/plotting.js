@@ -141,7 +141,7 @@ export function plotSpectrum(container, spectrum) {
     resizeSoon(container);
 }
 
-export function plotSpectrogram(container, spectrogram) {
+export function plotSpectrogram(container, spectrogram, options = {}) {
     const z = spectrogram.frequencies.map((_, k) =>
         spectrogram.times.map((_, t) => spectrogram.values[t][k])
     );
@@ -171,6 +171,10 @@ export function plotSpectrogram(container, spectrogram) {
         yaxis: axis("Frecuencia (Hz)", { rangemode: "tozero" })
     };
 
+    // React conserva el contenedor, pero usamos una clave de actualización
+    // para asegurarnos de que una STFT nueva reemplace la anterior.
+    layout.uirevision = "spectrogram";
+    layout.datarevision = options.revision ?? Date.now();
     Plotly.react(container, [trace], layout, plotConfig);
     resizeSoon(container);
 }

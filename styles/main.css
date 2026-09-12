@@ -34,6 +34,48 @@ a { color: inherit; }
 .brand-text { display: grid; }
 .brand-text strong { font-family: var(--display); font-size: 1.3rem; line-height: 1; }
 .brand-text span { margin-top: 4px; font-size: .73rem; color: #b8c8bd; letter-spacing: .02em; }
+
+/* Logos institucionales: reemplaza cada contenido por <img src="..."> cuando tengas los logos. */
+.institution-logos {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    margin-right: 8px;
+}
+
+.logo-placeholder {
+    width: 62px;
+    height: 46px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    border: 1px dashed rgba(255,255,255,.35);
+    border-radius: 8px;
+    background: rgba(255,255,255,.045);
+    color: #dce6df;
+}
+
+.logo-placeholder span {
+    font-family: var(--mono);
+    font-size: .65rem;
+    font-weight: 600;
+}
+
+.logo-placeholder small {
+    font-size: .52rem;
+    color: #aebeb4;
+}
+
+.logo-placeholder img {
+    display: block;
+    max-width: 52px;
+    max-height: 38px;
+    object-fit: contain;
+}
+
 .site-nav { display: flex; gap: 8px; }
 .site-nav a { padding: 9px 13px; border-radius: 8px; text-decoration: none; color: #cbd8d0; font-size: .85rem; }
 .site-nav a:hover { color: white; background: rgba(255,255,255,.07); }

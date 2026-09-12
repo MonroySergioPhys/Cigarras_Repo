@@ -7,8 +7,12 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="f5eab67d-dab9-45b4-8533-e39c46db71ed" name="Changes" comment="Cambios">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    <list default="true" id="f5eab67d-dab9-45b4-8533-e39c46db71ed" name="Changes" comment="Mejoras en interfaz y audio">
+      <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/app.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/plotting.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/plotting.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/timeline.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/timeline.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/styles/main.css" beforeDir="false" afterPath="$PROJECT_DIR$/styles/main.css" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -54,23 +58,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.008490116113485" />
-      <entry key="MS500" value="1.3853065370201727" />
-      <entry key="S2" value="1.8890530758756419" />
-      <entry key="S5" value="2.5079094133714355" />
-      <entry key="S10" value="3.045557739525427" />
-      <entry key="S30" value="3.618188064377571" />
-      <entry key="S60" value="3.799715819242166" />
-      <entry key="M2" value="3.8986511223058478" />
-      <entry key="M5" value="4.314294011590867" />
-      <entry key="M10" value="6.508641721305222" />
-      <entry key="M15" value="8.966528309579719" />
-      <entry key="M30" value="14.12184008183472" />
-      <entry key="H1" value="18.757953204622737" />
-      <entry key="H2" value="21.960639936285393" />
-      <entry key="H4" value="23.86071853879903" />
-      <entry key="D1" value="25.625359480777664" />
-      <entry key="W1" value="25.946015886304338" />
+      <entry key="MS100" value="1.012798921140026" />
+      <entry key="MS500" value="1.5796305158865234" />
+      <entry key="S2" value="3.70980291422403" />
+      <entry key="S5" value="5.605923656525211" />
+      <entry key="S10" value="6.639838485791749" />
+      <entry key="S30" value="7.503723753005528" />
+      <entry key="S60" value="7.746018668898339" />
+      <entry key="M2" value="7.87150950738004" />
+      <entry key="M5" value="7.948238904258347" />
+      <entry key="M10" value="7.975400809150619" />
+      <entry key="M15" value="8.01399739635352" />
+      <entry key="M30" value="8.825770270907267" />
+      <entry key="H1" value="12.555355315516216" />
+      <entry key="H2" value="18.82512442609607" />
+      <entry key="H4" value="24.75300978294448" />
+      <entry key="D1" value="32.15866630065321" />
+      <entry key="W1" value="33.72847185532999" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -92,23 +96,23 @@
       <entry key="W1" value="0.0" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9410096487688948" />
-      <entry key="MS500" value="1.366761713015984" />
-      <entry key="S2" value="1.882742669076927" />
-      <entry key="S5" value="2.5044419808195255" />
-      <entry key="S10" value="3.043402481902322" />
-      <entry key="S30" value="3.6173187115023224" />
-      <entry key="S60" value="3.7992571364358163" />
-      <entry key="M2" value="3.898413519144822" />
-      <entry key="M5" value="4.314058779234588" />
-      <entry key="M10" value="6.508180832980649" />
-      <entry key="M15" value="8.965986836747758" />
-      <entry key="M30" value="14.121332893397835" />
-      <entry key="H1" value="18.757593929826765" />
-      <entry key="H2" value="21.960423537287234" />
-      <entry key="H4" value="23.860599363384697" />
-      <entry key="D1" value="25.625337910743685" />
-      <entry key="W1" value="25.946012760418395" />
+      <entry key="MS100" value="0.9320468549988837" />
+      <entry key="MS500" value="1.554082753345716" />
+      <entry key="S2" value="3.6944926292968727" />
+      <entry key="S5" value="5.596574434166949" />
+      <entry key="S10" value="6.634280358172047" />
+      <entry key="S30" value="7.5016244330181765" />
+      <entry key="S60" value="7.7449343878771915" />
+      <entry key="M2" value="7.870958398342449" />
+      <entry key="M5" value="7.948016266785697" />
+      <entry key="M10" value="7.975289026191235" />
+      <entry key="M15" value="8.013920964979954" />
+      <entry key="M30" value="8.825702990505922" />
+      <entry key="H1" value="12.555249316775612" />
+      <entry key="H2" value="18.825008398885547" />
+      <entry key="H4" value="24.75292143400971" />
+      <entry key="D1" value="32.15864518688164" />
+      <entry key="W1" value="33.72846864448081" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo">{
@@ -252,7 +256,23 @@
       <option name="project" value="LOCAL" />
       <updated>1789180062855</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="Mejoras en interfaz y audio">
+      <option name="closed" value="true" />
+      <created>1789180428473</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1789180428473</updated>
+    </task>
+    <task id="LOCAL-00010" summary="Mejoras en interfaz y audio">
+      <option name="closed" value="true" />
+      <created>1789180589344</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1789180589344</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -264,7 +284,8 @@
     <MESSAGE value="Audio" />
     <MESSAGE value="Mejoras visuales" />
     <MESSAGE value="Cambios" />
-    <option name="LAST_COMMIT_MESSAGE" value="Cambios" />
+    <MESSAGE value="Mejoras en interfaz y audio" />
+    <option name="LAST_COMMIT_MESSAGE" value="Mejoras en interfaz y audio" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

@@ -168,11 +168,18 @@
                 <div>
                     <span class="section-kicker">TIEMPO REAL</span>
                     <h2>Sonograma en vivo</h2>
-                    <p class="section-note">Cascada continua: lo más reciente entra por la derecha, lo más antiguo se desplaza y desaparece por la izquierda. No se guarda ningún archivo en este modo.</p>
+                    <p class="section-note">Cascada continua: lo más reciente entra por la derecha, lo más antiguo se desplaza y desaparece por la izquierda. El punto celeste marca la frecuencia dominante en cada instante.</p>
+                </div>
+                <div class="selection-readout">
+                    <span>Frecuencia dominante</span>
+                    <strong id="liveDominantFreq">—</strong>
                 </div>
             </div>
             <canvas id="liveSpectrogramCanvas" class="live-spectrogram-canvas"></canvas>
             <div class="legend-note"><span class="legend-swatch"></span> Intensidad relativa · agudos arriba, graves abajo</div>
+
+            <p class="section-note live-spectrum-chart-label">Espectro en vivo — la altura de cada barra es la energía de esa frecuencia en este instante.</p>
+            <canvas id="liveSpectrumChart" class="live-spectrum-chart"></canvas>
         </section>
 
         <section class="sheet timeline-sheet hidden" id="timelineSection">

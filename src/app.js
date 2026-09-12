@@ -21,6 +21,8 @@ const liveModeButtonText = document.getElementById("liveModeButtonText");
 const liveModeStatus = document.getElementById("liveModeStatus");
 const liveSpectrogramSection = document.getElementById("liveSpectrogramSection");
 const liveSpectrogramCanvas = document.getElementById("liveSpectrogramCanvas");
+const liveSpectrumChart = document.getElementById("liveSpectrumChart");
+const liveDominantFreq = document.getElementById("liveDominantFreq");
 const audioInfo = document.getElementById("audioInfo");
 const audioBadge = document.getElementById("audioBadge");
 const audioPlayback = document.getElementById("audioPlayback");
@@ -345,7 +347,11 @@ async function startLiveMode() {
     liveSpectrogramSection.classList.remove("hidden");
 
     try {
-        liveSession = await startLiveSpectrogram(liveSpectrogramCanvas);
+        liveSession = await startLiveSpectrogram({
+            waterfallCanvas: liveSpectrogramCanvas,
+            spectrumCanvas: liveSpectrumChart,
+            onDominantFrequency: (text) => { liveDominantFreq.textContent = text; }
+        });
     } catch (error) {
         liveModeStatus.textContent = describeMicError(error);
         liveSpectrogramSection.classList.add("hidden");
@@ -372,6 +378,7 @@ async function stopLiveMode() {
     liveModeButtonText.textContent = "Iniciar sonograma en vivo";
     liveModeStatus.textContent = "";
     liveSpectrogramSection.classList.add("hidden");
+    liveDominantFreq.textContent = "—";
     recordButton.disabled = false;
 }
 

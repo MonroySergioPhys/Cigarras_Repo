@@ -7,11 +7,7 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="f5eab67d-dab9-45b4-8533-e39c46db71ed" name="Changes" comment="Mejoras visuales">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/fft.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/plots.js" beforeDir="false" />
-    </list>
+    <list default="true" id="f5eab67d-dab9-45b4-8533-e39c46db71ed" name="Changes" comment="Mejoras visuales" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -226,7 +222,7 @@
       <workItem from="1789156449045" duration="1089000" />
       <workItem from="1789161245107" duration="1018000" />
       <workItem from="1789162360104" duration="4051000" />
-      <workItem from="1789171463712" duration="978000" />
+      <workItem from="1789171463712" duration="1537000" />
     </task>
     <task id="LOCAL-00001" summary="Barra de carga oculta y texto">
       <option name="closed" value="true" />
@@ -268,7 +264,15 @@
       <option name="project" value="LOCAL" />
       <updated>1789171611414</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Mejoras visuales">
+      <option name="closed" value="true" />
+      <created>1789172632977</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1789172632977</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

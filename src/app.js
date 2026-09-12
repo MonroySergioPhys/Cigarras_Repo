@@ -9,12 +9,18 @@ import {
 } from "./analysis.js";
 import { plotWaveform, plotSpectrum, plotSpectrogram } from "./plotting.js";
 import { initializeTimeline } from "./timeline.js";
+import { startLiveSpectrogram } from "./liveSpectrogram.js";
 
 const audioFile = document.getElementById("audioFile");
 const recordButton = document.getElementById("recordButton");
 const recordButtonText = document.getElementById("recordButtonText");
 const recordStatus = document.getElementById("recordStatus");
 const liveSpectrum = document.getElementById("liveSpectrum");
+const liveModeButton = document.getElementById("liveModeButton");
+const liveModeButtonText = document.getElementById("liveModeButtonText");
+const liveModeStatus = document.getElementById("liveModeStatus");
+const liveSpectrogramSection = document.getElementById("liveSpectrogramSection");
+const liveSpectrogramCanvas = document.getElementById("liveSpectrogramCanvas");
 const audioInfo = document.getElementById("audioInfo");
 const audioBadge = document.getElementById("audioBadge");
 const audioPlayback = document.getElementById("audioPlayback");
@@ -48,6 +54,8 @@ let spectrogramRevision = 0;
 let isRecording = false;
 let activeRecorder = null;
 let vizAnimationId = null;
+let liveSession = null;
+let isLiveMode = false;
 
 const DEFAULT_WINDOW_SECONDS = 20;
 const MIN_SELECTION_SECONDS = 1;
@@ -62,6 +70,7 @@ audioFile.addEventListener("change", async (event) => {
     if (file) await processAudioFile(file);
 });
 recordButton.addEventListener("click", handleRecordClick);
+liveModeButton.addEventListener("click", handleLiveModeClick);
 window.addEventListener("resize", () => {
     [waveform, spectrum, spectrogram].forEach((el) => {
         if (el?.data) Plotly.Plots.resize(el);
@@ -242,6 +251,11 @@ async function handleRecordClick() {
 }
 
 async function startRecording() {
+    if (isLiveMode) {
+        recordStatus.textContent = "Detén el sonograma en vivo antes de grabar.";
+        return;
+    }
+
     recordButton.disabled = true;
     recordStatus.textContent = "Solicitando acceso al micrófono…";
     try {
@@ -309,6 +323,56 @@ function startLiveVisualization(analyser) {
 function stopLiveVisualization() {
     if (vizAnimationId !== null) cancelAnimationFrame(vizAnimationId);
     vizAnimationId = null;
+}
+
+// ------------------------------------------------------------
+// Sonograma en tiempo real (modo en vivo)
+// ------------------------------------------------------------
+
+async function handleLiveModeClick() {
+    if (isLiveMode) await stopLiveMode();
+    else await startLiveMode();
+}
+
+async function startLiveMode() {
+    if (isRecording) {
+        liveModeStatus.textContent = "Detén la grabación antes de entrar al modo en vivo.";
+        return;
+    }
+
+    liveModeButton.disabled = true;
+    liveModeStatus.textContent = "Solicitando acceso al micrófono…";
+    liveSpectrogramSection.classList.remove("hidden");
+
+    try {
+        liveSession = await startLiveSpectrogram(liveSpectrogramCanvas);
+    } catch (error) {
+        liveModeStatus.textContent = describeMicError(error);
+        liveSpectrogramSection.classList.add("hidden");
+        liveModeButton.disabled = false;
+        return;
+    }
+
+    isLiveMode = true;
+    liveModeButton.disabled = false;
+    liveModeButton.setAttribute("aria-pressed", "true");
+    liveModeButtonText.textContent = "Detener sonograma en vivo";
+    liveModeStatus.textContent = "Transmitiendo en vivo…";
+    recordButton.disabled = true;
+}
+
+async function stopLiveMode() {
+    if (!liveSession) return;
+
+    liveSession.stop();
+    liveSession = null;
+    isLiveMode = false;
+
+    liveModeButton.setAttribute("aria-pressed", "false");
+    liveModeButtonText.textContent = "Iniciar sonograma en vivo";
+    liveModeStatus.textContent = "";
+    liveSpectrogramSection.classList.add("hidden");
+    recordButton.disabled = false;
 }
 
 // ------------------------------------------------------------

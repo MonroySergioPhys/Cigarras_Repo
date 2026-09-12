@@ -91,6 +91,22 @@
             <canvas id="liveSpectrum" class="live-spectrum hidden" width="280" height="70" aria-hidden="true"></canvas>
         </section>
 
+        <section class="panel-block live-mode-block">
+            <div class="panel-heading">
+                <span class="step-number">✦</span>
+                <div>
+                    <h2>Modo en vivo</h2>
+                    <p>Sonograma continuo del micrófono, sin guardar archivo.</p>
+                </div>
+            </div>
+
+            <button id="liveModeButton" class="record-button live-mode-button" aria-pressed="false">
+                <span class="record-dot" aria-hidden="true"></span>
+                <span id="liveModeButtonText">Iniciar sonograma en vivo</span>
+            </button>
+            <p id="liveModeStatus" class="record-status" aria-live="polite"></p>
+        </section>
+
         <section class="panel-block progress-block">
             <div class="panel-heading compact">
                 <span class="step-number">02</span>
@@ -145,6 +161,18 @@
                 <audio id="audioPlayer" controls></audio>
                 <a id="downloadLink" class="btn-download" download>Descargar audio</a>
             </div>
+        </section>
+
+        <section class="sheet live-spectrogram-sheet hidden" id="liveSpectrogramSection">
+            <div class="section-heading">
+                <div>
+                    <span class="section-kicker">TIEMPO REAL</span>
+                    <h2>Sonograma en vivo</h2>
+                    <p class="section-note">Cascada continua: lo más reciente entra por la derecha, lo más antiguo se desplaza y desaparece por la izquierda. No se guarda ningún archivo en este modo.</p>
+                </div>
+            </div>
+            <canvas id="liveSpectrogramCanvas" class="live-spectrogram-canvas"></canvas>
+            <div class="legend-note"><span class="legend-swatch"></span> Intensidad relativa · agudos arriba, graves abajo</div>
         </section>
 
         <section class="sheet timeline-sheet hidden" id="timelineSection">

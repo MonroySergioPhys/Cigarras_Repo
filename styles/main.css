@@ -1,4 +1,21 @@
-@import url("loading.css");
+:root {
+    --color-bg-panel: #10201A;
+    --color-bg-panel-raised: #17281F;
+    --color-bg-workspace: #E8EDE7;
+    --color-bg-sheet: #F5F7F3;
+    --color-ink: #1C2620;
+    --color-ink-soft: #55655B;
+    --color-paper-line: #CCD6CB;
+    --color-accent: #D9A441;
+    --color-accent-strong: #C08B2C;
+    --color-on-panel: #EDEFE9;
+    --color-on-panel-soft: #A9B7AC;
+    --color-error: #C1503C;
+
+    --font-display: "Fraunces", Georgia, serif;
+    --font-body: "Public Sans", Arial, sans-serif;
+    --font-data: "JetBrains Mono", "Courier New", monospace;
+}
 
 * {
     box-sizing: border-box;
@@ -7,104 +24,325 @@
 }
 
 body {
-    font-family: Arial, sans-serif;
-    background: #f4f5f7;
-    color: #222;
+    font-family: var(--font-body);
+    background: var(--color-bg-workspace);
+    color: var(--color-ink);
 }
 
-.header {
-    text-align: center;
-    padding: 40px 20px;
-    background: #1f2937;
-    color: white;
+/* ==========================================================
+   Encabezado
+   ========================================================== */
+
+.site-header {
+    background: var(--color-bg-panel);
+    color: var(--color-on-panel);
+    padding: 22px 32px;
 }
 
-.header h1 {
-    font-size: 2.5rem;
-    margin-bottom: 10px;
-}
-
-.header p {
-    font-size: 1.1rem;
-}
-
-.container {
-    width: min(1200px, 92%);
-    margin: 30px auto;
-}
-
-section {
-    background: white;
-    border-radius: 12px;
-    padding: 25px;
-    margin-bottom: 25px;
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
-}
-
-h2 {
-    margin-bottom: 20px;
-}
-
-.controls {
+.brand {
     display: flex;
-    align-items: flex-start;
-    gap: 25px;
-    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
-.control-group {
+.brand-mark {
+    width: 34px;
+    height: 34px;
+    color: var(--color-accent);
+    flex-shrink: 0;
+}
+
+.brand-text h1 {
+    font-family: var(--font-display);
+    font-size: 1.7rem;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.brand-text p {
+    font-size: 0.9rem;
+    color: var(--color-on-panel-soft);
+    margin-top: 4px;
+}
+
+/* ==========================================================
+   Estructura de dos columnas
+   ========================================================== */
+
+.app-shell {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    align-items: start;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.control-panel {
+    background: var(--color-bg-panel);
+    color: var(--color-on-panel);
+    padding: 28px 24px;
+    min-height: calc(100vh - 84px);
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 32px;
 }
 
-.control-group label {
-    font-size: 0.9rem;
+.panel-block h2 {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
     font-weight: 600;
-    color: #444;
+    margin-bottom: 16px;
+    color: var(--color-on-panel);
 }
 
-input[type="file"] {
-    font-size: 0.9rem;
-    max-width: 260px;
+.workspace {
+    padding: 28px 32px 60px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
 }
 
-button {
-    padding: 10px 18px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 1rem;
-    background: #1f2937;
-    color: white;
-    transition: background 0.15s ease, transform 0.1s ease;
+/* ==========================================================
+   "Hojas" del cuaderno de resultados
+   ========================================================== */
+
+.sheet {
+    background: var(--color-bg-sheet);
+    border-top: 3px solid var(--color-accent);
+    border-radius: 4px;
+    padding: 24px 28px;
 }
 
-button:hover {
-    background: #374151;
+.sheet h2 {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 16px;
 }
 
-button:active {
-    transform: scale(0.98);
+.empty-state {
+    color: var(--color-ink-soft);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    max-width: 46ch;
 }
 
-button:focus-visible {
-    outline: 2px solid #5b8def;
-    outline-offset: 2px;
+#audioInfo p strong {
+    font-weight: 600;
 }
 
-#recordButton {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
+#audioInfo p {
+    margin-bottom: 6px;
+    font-size: 0.95rem;
+}
+
+#audioInfo .data-value {
+    font-family: var(--font-data);
 }
 
 .plot-section {
     min-height: 400px;
 }
 
-#waveform,
-#spectrum,
-#spectrogram {
+.plot-container {
     width: 100%;
+}
+
+/* ==========================================================
+   Controles: inputs y botones
+   ========================================================== */
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.control-group + .control-group {
+    margin-top: 4px;
+}
+
+.control-group label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-on-panel-soft);
+}
+
+.control-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 18px 0;
+    color: var(--color-on-panel-soft);
+    font-size: 0.8rem;
+}
+
+.control-divider::before,
+.control-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: rgba(237, 239, 233, 0.15);
+}
+
+input[type="file"] {
+    font-size: 0.85rem;
+    color: var(--color-on-panel-soft);
+}
+
+input[type="file"]::file-selector-button {
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 8px 14px;
+    margin-right: 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background: var(--color-accent);
+    color: var(--color-bg-panel);
+    transition: background 0.15s ease;
+}
+
+input[type="file"]::file-selector-button:hover {
+    background: var(--color-accent-strong);
+}
+
+button {
+    padding: 11px 18px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 600;
+    background: var(--color-accent);
+    color: var(--color-bg-panel);
+    transition: background 0.15s ease, transform 0.1s ease;
+}
+
+button:hover {
+    background: var(--color-accent-strong);
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+button:focus-visible,
+input:focus-visible,
+a:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+#recordButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.loading-idle {
+    font-size: 0.85rem;
+    color: var(--color-on-panel-soft);
+}
+
+/* ==========================================================
+   Reproducción y descarga de audio
+   ========================================================== */
+
+.audio-playback {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid var(--color-paper-line);
+}
+
+.audio-playback.hidden {
+    display: none;
+}
+
+#audioPlayer {
+    flex: 1;
+    min-width: 220px;
+    accent-color: var(--color-accent-strong);
+}
+
+.btn-download {
+    display: inline-flex;
+    align-items: center;
+    padding: 9px 16px;
+    border-radius: 6px;
+    background: transparent;
+    border: 1.5px solid var(--color-accent-strong);
+    color: var(--color-accent-strong);
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: background 0.15s ease, color 0.15s ease;
+    white-space: nowrap;
+}
+
+.btn-download:hover {
+    background: var(--color-accent-strong);
+    color: var(--color-bg-sheet);
+}
+
+/* ==========================================================
+   Responsive
+   ========================================================== */
+
+@media (max-width: 860px) {
+    .app-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .control-panel {
+        min-height: auto;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 24px 40px;
+    }
+
+    .panel-block {
+        flex: 1;
+        min-width: 240px;
+    }
+}
+
+@media (max-width: 520px) {
+    .site-header {
+        padding: 18px 20px;
+    }
+
+    .control-panel {
+        flex-direction: column;
+        padding: 22px 20px;
+    }
+
+    .workspace {
+        padding: 22px 20px 40px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .record-icon {
+        animation: none !important;
+    }
+
+    .loading-progress.indeterminate {
+        animation: none !important;
+        width: 60% !important;
+    }
 }

@@ -3,12 +3,10 @@
    ========================================================== */
 
 .loading {
-    margin-top: 1rem;
-    padding: 1rem;
-    border-radius: 8px;
-    background: #f4f4f6;
-    border: 1px solid #e0e0e5;
-    transition: opacity 0.2s ease;
+    padding: 16px;
+    border-radius: 6px;
+    background: var(--color-bg-panel-raised);
+    border: 1px solid rgba(237, 239, 233, 0.1);
 }
 
 .loading.hidden {
@@ -19,35 +17,36 @@
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    margin-bottom: 0.5rem;
+    margin-bottom: 10px;
 }
 
 #loadingText {
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     margin: 0;
+    color: var(--color-on-panel);
 }
 
 .loading-percent {
-    font-variant-numeric: tabular-nums;
-    font-weight: 600;
-    color: #4a4a55;
+    font-family: var(--font-data);
+    font-size: 0.85rem;
+    color: var(--color-accent);
 }
 
 .loading-bar {
     position: relative;
     width: 100%;
-    height: 10px;
-    border-radius: 6px;
-    background: #e2e2e8;
+    height: 8px;
+    border-radius: 5px;
+    background: rgba(237, 239, 233, 0.12);
     overflow: hidden;
 }
 
 .loading-progress {
     height: 100%;
     width: 0%;
-    border-radius: 6px;
-    background: linear-gradient(90deg, #5b8def, #4a7de0);
+    border-radius: 5px;
+    background: var(--color-accent);
     transition: width 0.25s ease-out;
 }
 
@@ -64,18 +63,22 @@
 }
 
 .loading-stage {
-    margin: 0.4rem 0 0;
-    font-size: 0.8rem;
-    color: #6b6b75;
+    margin-top: 8px;
+    font-size: 0.78rem;
+    color: var(--color-on-panel-soft);
 }
 
 /* Estado de error */
-.loading.error .loading-progress {
-    background: #e05b5b;
+.loading.error {
+    border-color: rgba(193, 80, 60, 0.4);
 }
 
-.loading.error .loading-stage {
-    color: #b23a3a;
+.loading.error .loading-progress {
+    background: var(--color-error);
+}
+
+.loading.error #loadingText {
+    color: var(--color-error);
 }
 
 /* ==========================================================
@@ -83,24 +86,28 @@
    ========================================================== */
 
 #recordButton[aria-pressed="true"] {
-    background: #e05b5b;
-    color: #fff;
+    background: var(--color-error);
+    color: var(--color-on-panel);
+}
+
+#recordButton[aria-pressed="true"]:hover {
+    background: #a8402f;
 }
 
 #recordButton[aria-pressed="true"] .record-icon {
+    display: inline-block;
     animation: pulse 1s ease-in-out infinite;
 }
 
 @keyframes pulse {
     0%, 100% { opacity: 1; }
-    50%      { opacity: 0.4; }
+    50%      { opacity: 0.35; }
 }
 
 .record-status {
-    font-size: 0.85rem;
-    color: #6b6b75;
+    font-size: 0.82rem;
+    color: var(--color-on-panel-soft);
     min-height: 1.2em;
-    margin: 0.3rem 0 0;
 }
 
 /* ==========================================================
@@ -109,22 +116,12 @@
 
 .live-spectrum {
     width: 100%;
-    max-width: 320px;
-    height: 60px;
+    height: 64px;
     border-radius: 6px;
-    background: #1f2937;
+    background: #0A150F;
     display: block;
 }
 
 .live-spectrum.hidden {
     display: none;
-}
-
-/* ==========================================================
-   Contenedores de gráficos Plotly
-   ========================================================== */
-
-.plot-container {
-    width: 100%;
-    min-height: 320px;
 }

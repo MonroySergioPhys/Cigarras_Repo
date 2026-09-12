@@ -4,9 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>CICADAS</title>
+    <title>Cicadas — Análisis acústico</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/loading.css">
 
     <!-- Plotly -->
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
@@ -14,105 +19,121 @@
 
 <body>
 
-<header class="header">
-    <h1>CICADAS</h1>
-    <p>Análisis acústico de cigarras</p>
+<header class="site-header">
+    <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M24 34c-6-4-10-10-10-16a10 10 0 0 1 20 0c0 6-4 12-10 16Z" stroke="currentColor" stroke-width="2"/>
+            <path d="M8 20c2-4 5-6 8-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M4 15c3-6 8-9 13-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
+            <path d="M40 20c-2-4-5-6-8-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M44 15c-3-6-8-9-13-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
+        </svg>
+        <div class="brand-text">
+            <h1>Cicadas</h1>
+            <p>Análisis acústico de cigarras</p>
+        </div>
+    </div>
 </header>
 
 
-<main class="container">
+<div class="app-shell">
 
-    <section class="controls">
+    <aside class="control-panel">
 
-        <h2>Audio</h2>
+        <section class="panel-block">
+            <h2>Entrada de audio</h2>
 
-        <div class="control-group">
-            <label for="audioFile">Cargar archivo de audio</label>
-            <input
-                    type="file"
-                    id="audioFile"
-                    accept="audio/*"
-            >
-        </div>
-
-        <div class="control-group">
-            <button id="recordButton" aria-pressed="false">
-                <span class="record-icon" aria-hidden="true">🎙</span>
-                <span id="recordButtonText">Grabar</span>
-            </button>
-            <p id="recordStatus" class="record-status" aria-live="polite"></p>
-            <canvas
-                    id="liveSpectrum"
-                    class="live-spectrum hidden"
-                    width="600"
-                    height="80"
-                    aria-hidden="true"
-            ></canvas>
-        </div>
-
-    </section>
-
-
-    <section class="audio-info">
-
-        <h2>Información</h2>
-
-        <div id="audioInfo">
-            <p>No se ha cargado ningún audio.</p>
-        </div>
-
-        <div id="loading" class="loading hidden" aria-live="polite">
-
-            <div class="loading-header">
-                <p id="loadingText">Procesando audio...</p>
-                <span id="loadingPercent" class="loading-percent">0%</span>
+            <div class="control-group">
+                <label for="audioFile">Subir archivo</label>
+                <input
+                        type="file"
+                        id="audioFile"
+                        accept="audio/*"
+                >
             </div>
 
-            <div
-                    class="loading-bar"
-                    role="progressbar"
-                    aria-valuemin="0"
-                    aria-valuemax="100"
-                    aria-valuenow="0"
-                    id="loadingBar"
-            >
-                <div id="loadingProgress" class="loading-progress"></div>
+            <div class="control-divider" role="separator" aria-label="o"><span>o</span></div>
+
+            <div class="control-group">
+                <button id="recordButton" aria-pressed="false">
+                    <span class="record-icon" aria-hidden="true">🎙</span>
+                    <span id="recordButtonText">Grabar</span>
+                </button>
+                <p id="recordStatus" class="record-status" aria-live="polite"></p>
+                <canvas
+                        id="liveSpectrum"
+                        class="live-spectrum hidden"
+                        width="280"
+                        height="70"
+                        aria-hidden="true"
+                ></canvas>
+            </div>
+        </section>
+
+        <section class="panel-block">
+            <h2>Progreso</h2>
+
+            <div id="loading" class="loading hidden" aria-live="polite">
+
+                <div class="loading-header">
+                    <p id="loadingText">Procesando audio...</p>
+                    <span id="loadingPercent" class="loading-percent">0%</span>
+                </div>
+
+                <div
+                        class="loading-bar"
+                        role="progressbar"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                        aria-valuenow="0"
+                        id="loadingBar"
+                >
+                    <div id="loadingProgress" class="loading-progress"></div>
+                </div>
+
+                <p id="loadingStage" class="loading-stage">Iniciando…</p>
+
             </div>
 
-            <p id="loadingStage" class="loading-stage">Iniciando…</p>
+            <p id="loadingIdle" class="loading-idle">Sin actividad por ahora.</p>
+        </section>
 
-        </div>
-
-    </section>
-
-
-    <section class="plot-section">
-
-        <h2>Forma de onda</h2>
-
-        <div id="waveform" class="plot-container"></div>
-
-    </section>
+    </aside>
 
 
-    <section class="plot-section">
+    <main class="workspace">
 
-        <h2>Espectro</h2>
+        <section class="sheet">
+            <h2>Registro actual</h2>
 
-        <div id="spectrum" class="plot-container"></div>
+            <div id="audioInfo">
+                <p class="empty-state">No se ha cargado ningún audio todavía. Sube un archivo o graba con el micrófono para empezar.</p>
+            </div>
 
-    </section>
+            <div id="audioPlayback" class="audio-playback hidden">
+                <audio id="audioPlayer" controls></audio>
+                <a id="downloadLink" class="btn-download" download>Descargar audio</a>
+            </div>
+        </section>
 
+        <section class="sheet plot-section">
+            <h2>Forma de onda</h2>
+            <div id="waveform" class="plot-container"></div>
+        </section>
 
-    <section class="plot-section">
+        <section class="sheet plot-section">
+            <h2>Espectro</h2>
+            <div id="spectrum" class="plot-container"></div>
+        </section>
 
-        <h2>Sonograma</h2>
+        <section class="sheet plot-section">
+            <h2>Sonograma</h2>
+            <div id="spectrogram" class="plot-container"></div>
+        </section>
 
-        <div id="spectrogram" class="plot-container"></div>
+    </main>
 
-    </section>
-
-</main>
+</div>
 
 
 <script type="module" src="src/app.js"></script>

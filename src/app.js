@@ -9,11 +9,18 @@ const liveSpectrum = document.getElementById("liveSpectrum");
 const audioInfo = document.getElementById("audioInfo");
 
 const loading = document.getElementById("loading");
+const loadingIdle = document.getElementById("loadingIdle");
 const loadingBar = document.getElementById("loadingBar");
 const loadingProgress = document.getElementById("loadingProgress");
 const loadingPercent = document.getElementById("loadingPercent");
 const loadingText = document.getElementById("loadingText");
 const loadingStage = document.getElementById("loadingStage");
+
+const audioPlayback = document.getElementById("audioPlayback");
+const audioPlayer = document.getElementById("audioPlayer");
+const downloadLink = document.getElementById("downloadLink");
+
+let currentObjectUrl = null;
 
 let isRecording = false;
 let activeRecorder = null;
@@ -29,11 +36,13 @@ recordButton.addEventListener("click", handleRecordClick);
 
 function showLoading(initialStage = "Iniciando…") {
     loading.classList.remove("hidden", "error");
+    loadingIdle.classList.add("hidden");
     setIndeterminate(initialStage);
 }
 
 function hideLoading() {
     loading.classList.add("hidden");
+    loadingIdle.classList.remove("hidden");
 }
 
 function setProgress(percent, stageText) {
@@ -106,6 +115,7 @@ async function processAudioFile(file, callbacks = {}) {
 
         setProgress(100, "Listo");
         displayAudioInfo(file, audio);
+        setupPlayback(file);
 
         // Pequeña pausa para que se note el 100% antes de ocultar la barra
         setTimeout(hideLoading, 400);
@@ -120,6 +130,7 @@ async function processAudioFile(file, callbacks = {}) {
         audioInfo.innerHTML = `
             <p>No fue posible cargar el archivo.</p>
         `;
+        audioPlayback.classList.add("hidden");
 
         callbacks.onError?.(error);
     }
@@ -128,12 +139,31 @@ async function processAudioFile(file, callbacks = {}) {
 function displayAudioInfo(file, audio) {
     audioInfo.innerHTML = `
         <p><strong>Archivo:</strong> ${file.name}</p>
-        <p><strong>Formato:</strong> ${file.type || "Desconocido"}</p>
-        <p><strong>Duración:</strong> ${audio.duration.toFixed(2)} s</p>
-        <p><strong>Frecuencia de muestreo:</strong> ${audio.sampleRate} Hz</p>
-        <p><strong>Canales:</strong> ${audio.numberOfChannels}</p>
-        <p><strong>Muestras:</strong> ${audio.numberOfSamples}</p>
+        <p><strong>Formato:</strong> <span class="data-value">${file.type || "Desconocido"}</span></p>
+        <p><strong>Duración:</strong> <span class="data-value">${audio.duration.toFixed(2)} s</span></p>
+        <p><strong>Frecuencia de muestreo:</strong> <span class="data-value">${audio.sampleRate} Hz</span></p>
+        <p><strong>Canales:</strong> <span class="data-value">${audio.numberOfChannels}</span></p>
+        <p><strong>Muestras:</strong> <span class="data-value">${audio.numberOfSamples}</span></p>
     `;
+}
+
+/**
+ * Prepara el reproductor y el enlace de descarga para el archivo
+ * cargado o recién grabado. Revoca la URL anterior antes de crear
+ * una nueva para no acumular objetos en memoria.
+ */
+function setupPlayback(file) {
+    if (currentObjectUrl) {
+        URL.revokeObjectURL(currentObjectUrl);
+    }
+
+    currentObjectUrl = URL.createObjectURL(file);
+
+    audioPlayer.src = currentObjectUrl;
+    downloadLink.href = currentObjectUrl;
+    downloadLink.download = file.name;
+
+    audioPlayback.classList.remove("hidden");
 }
 
 
@@ -224,7 +254,7 @@ function startLiveVisualization(analyser) {
 
         for (let i = 0; i < bufferLength; i++) {
             const barHeight = (dataArray[i] / 255) * height;
-            ctx.fillStyle = `hsl(${210 + (dataArray[i] / 255) * 40}, 70%, 55%)`;
+            ctx.fillStyle = `hsl(${38 + (dataArray[i] / 255) * 25}, 75%, ${50 + (dataArray[i] / 255) * 15}%)`;
             ctx.fillRect(x, height - barHeight, barWidth, barHeight);
             x += barWidth + 1;
         }
